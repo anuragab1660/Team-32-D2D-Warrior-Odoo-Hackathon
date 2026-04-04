@@ -63,7 +63,7 @@ export default function ProductDetailPage() {
           cost_price: p.cost_price,
         })
         const v = await getVariants(id)
-        setVariants(v)
+        setVariants(v ?? [])
       } catch {
         toast.error('Product not found')
         router.push('/products')
