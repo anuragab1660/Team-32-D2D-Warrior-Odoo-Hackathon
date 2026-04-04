@@ -25,12 +25,12 @@ const columns: ColumnDef<Subscription, unknown>[] = [
   {
     accessorKey: 'customer_name',
     header: 'Customer',
-    cell: ({ row }) => (row.original as Record<string, string>).customer_name ?? row.original.customer?.name ?? row.original.customer_id,
+    cell: ({ row }) => (row.original as unknown as Record<string, string>).customer_name ?? row.original.customer?.name ?? row.original.customer_id,
   },
   {
     accessorKey: 'plan_name',
     header: 'Plan',
-    cell: ({ row }) => (row.original as Record<string, string>).plan_name ?? row.original.plan?.name ?? '—',
+    cell: ({ row }) => (row.original as unknown as Record<string, string>).plan_name ?? row.original.plan?.name ?? '—',
   },
   {
     accessorKey: 'start_date',

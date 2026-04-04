@@ -20,12 +20,12 @@ const columns: ColumnDef<Payment, unknown>[] = [
   {
     accessorKey: 'invoice_number',
     header: 'Invoice',
-    cell: ({ row }) => (row.original as Record<string, string>).invoice_number ?? row.original.invoice?.invoice_number ?? row.original.invoice_id,
+    cell: ({ row }) => (row.original as unknown as Record<string, string>).invoice_number ?? row.original.invoice?.invoice_number ?? row.original.invoice_id,
   },
   {
     accessorKey: 'customer_name',
     header: 'Customer',
-    cell: ({ row }) => (row.original as Record<string, string>).customer_name ?? row.original.customer?.name ?? row.original.customer_id,
+    cell: ({ row }) => (row.original as unknown as Record<string, string>).customer_name ?? row.original.customer?.name ?? row.original.customer_id,
   },
   {
     accessorKey: 'amount',

@@ -103,7 +103,7 @@ export default function SubscriptionDetailPage() {
               <dl className="grid grid-cols-2 gap-4">
                 <div>
                   <dt className="text-xs text-slate-500 mb-1">Customer</dt>
-                  <dd className="text-sm font-medium text-slate-900">{(subscription as Record<string, string>).customer_name ?? subscription.customer?.name ?? subscription.customer_id}</dd>
+                  <dd className="text-sm font-medium text-slate-900">{(subscription as unknown as Record<string, string>).customer_name ?? subscription.customer?.name ?? subscription.customer_id}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500 mb-1">Status</dt>
@@ -119,7 +119,7 @@ export default function SubscriptionDetailPage() {
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500 mb-1">Plan</dt>
-                  <dd className="text-sm text-slate-700">{(subscription as Record<string, string>).plan_name ?? subscription.plan?.name ?? '—'}</dd>
+                  <dd className="text-sm text-slate-700">{(subscription as unknown as Record<string, string>).plan_name ?? subscription.plan?.name ?? '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500 mb-1">Payment Terms</dt>
@@ -152,7 +152,7 @@ export default function SubscriptionDetailPage() {
                     <tbody>
                       {subscription.lines.map(line => (
                         <tr key={line.id} className="border-b border-slate-100">
-                          <td className="py-2">{(line as Record<string, string>).product_name ?? line.product?.name ?? line.product_id}</td>
+                          <td className="py-2">{(line as unknown as Record<string, string>).product_name ?? line.product?.name ?? line.product_id}</td>
                           <td className="py-2 text-right">{line.quantity}</td>
                           <td className="py-2 text-right">₹{line.unit_price.toLocaleString()}</td>
                           <td className="py-2 text-right font-medium">₹{line.total_amount.toLocaleString()}</td>

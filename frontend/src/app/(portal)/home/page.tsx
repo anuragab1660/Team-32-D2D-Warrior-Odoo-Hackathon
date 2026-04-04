@@ -81,7 +81,7 @@ export default function PortalHomePage() {
                 <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
                   <div>
                     <p className="text-sm font-medium text-slate-800">{sub.subscription_number}</p>
-                    <p className="text-xs text-slate-500">{(sub as Record<string, string>).plan_name ?? sub.plan?.name ?? 'No plan'} · Started {new Date(sub.start_date).toLocaleDateString()}</p>
+                    <p className="text-xs text-slate-500">{(sub as unknown as Record<string, string>).plan_name ?? sub.plan?.name ?? 'No plan'} · Started {new Date(sub.start_date).toLocaleDateString()}</p>
                   </div>
                   <StatusBadge status={sub.status} type="subscription" />
                 </div>

@@ -43,7 +43,7 @@ export default function OrdersPage() {
                   <div>
                     <p className="font-medium text-slate-900">{sub.subscription_number}</p>
                     <p className="text-sm text-slate-500 mt-0.5">
-                      {(sub as Record<string, string>).plan_name ?? sub.plan?.name ?? 'No plan'} · Started {new Date(sub.start_date).toLocaleDateString()}
+                      {(sub as unknown as Record<string, string>).plan_name ?? sub.plan?.name ?? 'No plan'} · Started {new Date(sub.start_date).toLocaleDateString()}
                     </p>
                     {sub.expiration_date && (
                       <p className="text-xs text-slate-400">
