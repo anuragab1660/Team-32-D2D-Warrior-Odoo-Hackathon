@@ -122,7 +122,7 @@ export default function ProductDetailPage() {
       value: newVariant.value,
       extra_price: parseFloat(newVariant.extra_price) || 0,
     })
-    setVariants(prev => [...prev, v])
+    if (v) setVariants(prev => [...prev, v])
     setNewVariant({ attribute: '', value: '', extra_price: '0' })
   }
 
