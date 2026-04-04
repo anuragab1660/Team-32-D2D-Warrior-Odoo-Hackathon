@@ -1,17 +1,22 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { motion } from 'framer-motion'
 import { useProducts } from '@/hooks/useProducts'
+import { useTaxes } from '@/hooks/useTaxes'
+import { useDiscounts } from '@/hooks/useDiscounts'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeftIcon, LoaderIcon, ImageIcon, XIcon } from 'lucide-react'
@@ -24,18 +29,29 @@ const schema = z.object({
   description: z.string().optional(),
   sales_price: z.coerce.number().min(0, 'Must be >= 0'),
   cost_price: z.coerce.number().min(0, 'Must be >= 0'),
+  category: z.string().optional(),
+  hsn_sac_code: z.string().optional(),
 })
-
 type FormData = z.infer<typeof schema>
 
 export default function NewProductPage() {
   const router = useRouter()
   const { createProduct } = useProducts()
+  const { taxes, fetchTaxes } = useTaxes()
+  const { discounts, fetchDiscounts } = useDiscounts()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [imageUploading, setImageUploading] = useState(false)
+  const [taxId, setTaxId] = useState<string>('__none__')
+  const [discountId, setDiscountId] = useState<string>('__none__')
+  const [isActive, setIsActive] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    fetchTaxes(true)
+    fetchDiscounts(true)
+  }, [fetchTaxes, fetchDiscounts])
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -53,6 +69,7 @@ export default function NewProductPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       setImageUrl(data.url)
+      toast.success('Image uploaded successfully')
     } catch {
       toast.error('Image upload failed')
     } finally {
@@ -64,8 +81,17 @@ export default function NewProductPage() {
     setIsLoading(true)
     setError('')
     try {
-      const product = await createProduct({ ...data, image_url: imageUrl || undefined })
-      if (product) router.push(`/products/${product.id}`)
+      const product = await createProduct({
+        ...data,
+        image_url: imageUrl || undefined,
+        tax_id: taxId === '__none__' ? undefined : taxId || undefined,
+        default_discount_id: discountId === '__none__' ? undefined : discountId || undefined,
+        is_active: isActive,
+      })
+      if (product) {
+        toast.success('Product created!')
+        router.push(`/products/${product.id}`)
+      }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e?.response?.data?.error || 'Failed to create product')
@@ -75,7 +101,12 @@ export default function NewProductPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <motion.div
+      className="space-y-6 max-w-2xl"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+    >
       <PageHeader
         title="New Product"
         description="Add a new product to your catalog"
@@ -91,7 +122,7 @@ export default function NewProductPage() {
       <Card className="border-slate-200">
         <CardHeader><CardTitle className="text-base">Product Details</CardTitle></CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {error && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{error}</div>
             )}
@@ -127,18 +158,18 @@ export default function NewProductPage() {
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             </div>
 
+            {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="name">Product Name</Label>
+              <Label htmlFor="name">Product Name <span className="text-red-500">*</span></Label>
               <Input id="name" placeholder="e.g. Premium Subscription" {...register('name')} className={errors.name ? 'border-red-400' : ''} />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
+            {/* Type */}
             <div className="space-y-2">
-              <Label>Product Type</Label>
+              <Label>Product Type <span className="text-red-500">*</span></Label>
               <Select defaultValue="service" onValueChange={(v) => setValue('product_type', v as FormData['product_type'])}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="service">Service</SelectItem>
                   <SelectItem value="physical">Physical</SelectItem>
@@ -148,22 +179,73 @@ export default function NewProductPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input id="description" placeholder="Optional description" {...register('description')} />
-            </div>
-
+            {/* Category + HSN */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sales_price">Sales Price (₹)</Label>
+                <Label htmlFor="category">Category</Label>
+                <Input id="category" placeholder="e.g. Software" {...register('category')} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="hsn_sac_code">HSN / SAC Code</Label>
+                <Input id="hsn_sac_code" placeholder="e.g. 998314" {...register('hsn_sac_code')} />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea id="description" placeholder="Optional product description" rows={3} {...register('description')} />
+            </div>
+
+            {/* Prices */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="sales_price">Sales Price (₹) <span className="text-red-500">*</span></Label>
                 <Input id="sales_price" type="number" step="0.01" {...register('sales_price')} className={errors.sales_price ? 'border-red-400' : ''} />
                 {errors.sales_price && <p className="text-xs text-red-500">{errors.sales_price.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cost_price">Cost Price (₹)</Label>
+                <Label htmlFor="cost_price">Cost Price (₹) <span className="text-red-500">*</span></Label>
                 <Input id="cost_price" type="number" step="0.01" {...register('cost_price')} className={errors.cost_price ? 'border-red-400' : ''} />
                 {errors.cost_price && <p className="text-xs text-red-500">{errors.cost_price.message}</p>}
               </div>
+            </div>
+
+            {/* Tax */}
+            <div className="space-y-2">
+              <Label>Default Tax</Label>
+              <Select value={taxId} onValueChange={setTaxId}>
+                <SelectTrigger><SelectValue placeholder="Select tax (optional)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">No Tax</SelectItem>
+                  {taxes.map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.name} — {t.rate}%</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Discount */}
+            <div className="space-y-2">
+              <Label>Default Discount</Label>
+              <Select value={discountId} onValueChange={setDiscountId}>
+                <SelectTrigger><SelectValue placeholder="Select discount (optional)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">No Discount</SelectItem>
+                  {discounts.map(d => (
+                    <SelectItem key={d.id} value={d.id}>{d.name} — {d.type === 'percentage' ? `${d.value}%` : `₹${d.value}`}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Active toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+              <div>
+                <p className="text-sm font-medium text-slate-800">Active</p>
+                <p className="text-xs text-slate-500">Product is visible and can be added to subscriptions</p>
+              </div>
+              <Switch checked={isActive} onCheckedChange={setIsActive} />
             </div>
 
             <div className="flex gap-3 pt-2">
@@ -177,6 +259,6 @@ export default function NewProductPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   )
 }
