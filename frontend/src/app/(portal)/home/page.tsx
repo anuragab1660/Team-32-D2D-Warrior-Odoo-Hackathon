@@ -95,7 +95,7 @@ export default function PortalHomePage() {
         <Card className="border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-base">Invoices Due</CardTitle>
-            <Link href="/invoices" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+            <Link href="/my-invoices" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
               View all <ArrowRightIcon className="h-3 w-3" />
             </Link>
           </CardHeader>
@@ -109,7 +109,7 @@ export default function PortalHomePage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-slate-900">₹{inv.grand_total.toLocaleString()}</p>
-                    <Link href={`/invoices/${inv.id}`} className="text-xs text-indigo-600 hover:underline">Pay now</Link>
+                    <Link href={`/my-invoices/${inv.id}`} className="text-xs text-indigo-600 hover:underline">Pay now</Link>
                   </div>
                 </div>
               ))}

@@ -5,7 +5,7 @@ import { useReports } from '@/hooks/useReports'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { DashboardMetrics, MonthlyRevenue, OverdueInvoice } from '@/types'
-import { ZapIcon, FileTextIcon, CreditCardIcon, TrendingUpIcon, AlertCircleIcon } from 'lucide-react'
+import { ZapIcon, FileTextIcon, CreditCardIcon, TrendingUpIcon, AlertCircleIcon, UsersIcon, BuildingIcon, ClockIcon } from 'lucide-react'
 
 export default function DashboardPage() {
   const { getDashboard, getMonthlyRevenue, getOverdueInvoices, loading } = useReports()
@@ -51,6 +51,27 @@ export default function DashboardPage() {
       icon: CreditCardIcon,
       color: 'text-amber-600',
       bg: 'bg-amber-50',
+    },
+    {
+      label: 'Expiring (30 days)',
+      value: metrics?.expiring_soon ?? '--',
+      icon: ClockIcon,
+      color: 'text-orange-600',
+      bg: 'bg-orange-50',
+    },
+    {
+      label: 'Total Users',
+      value: metrics?.total_users ?? '--',
+      icon: UsersIcon,
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+    },
+    {
+      label: 'Total Customers',
+      value: metrics?.total_customers ?? '--',
+      icon: BuildingIcon,
+      color: 'text-purple-600',
+      bg: 'bg-purple-50',
     },
   ]
 

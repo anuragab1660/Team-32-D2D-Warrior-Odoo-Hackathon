@@ -13,10 +13,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { User } from '@/types'
-import { PlusIcon, LoaderIcon } from 'lucide-react'
+import { PlusIcon, LoaderIcon, ToggleLeftIcon, MailIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
-const columns: ColumnDef<User, unknown>[] = [
+const buildColumns = (
+  onToggle: (id: string) => void,
+  onResend: (id: string) => void,
+): ColumnDef<User, unknown>[] => [
   {
     accessorKey: 'name',
     header: 'Name',
@@ -40,6 +43,23 @@ const columns: ColumnDef<User, unknown>[] = [
     header: 'Joined',
     cell: ({ row }) => row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : '—',
   },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="sm" onClick={() => onToggle(row.original.id)} className="h-7 text-xs gap-1">
+          <ToggleLeftIcon className="h-3.5 w-3.5" />
+          {row.original.is_active ? 'Deactivate' : 'Activate'}
+        </Button>
+        {!row.original.is_active && (
+          <Button variant="ghost" size="sm" onClick={() => onResend(row.original.id)} className="h-7 text-xs gap-1">
+            <MailIcon className="h-3.5 w-3.5" />Resend
+          </Button>
+        )}
+      </div>
+    ),
+  },
 ]
 
 export default function UsersPage() {
@@ -62,6 +82,25 @@ export default function UsersPage() {
   }
 
   useEffect(() => { fetchUsers() }, [])
+
+  const handleToggle = async (id: string) => {
+    try {
+      await api.patch(`/api/users/${id}/toggle`)
+      toast.success('User status updated')
+      fetchUsers()
+    } catch {
+      toast.error('Failed to update user')
+    }
+  }
+
+  const handleResend = async (id: string) => {
+    try {
+      await api.post(`/api/users/${id}/resend-invite`)
+      toast.success('Invitation resent')
+    } catch {
+      toast.error('Failed to resend invitation')
+    }
+  }
 
   const handleInvite = async () => {
     if (!inviteForm.email) return
@@ -94,7 +133,7 @@ export default function UsersPage() {
       />
 
       <DataTable
-        columns={columns}
+        columns={buildColumns(handleToggle, handleResend)}
         data={users}
         loading={loading}
         emptyTitle="No users found"

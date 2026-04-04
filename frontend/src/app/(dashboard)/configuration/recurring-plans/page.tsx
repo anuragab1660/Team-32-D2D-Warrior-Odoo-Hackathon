@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { RecurringPlan } from '@/types'
+import { Switch } from '@/components/ui/switch'
 import { PlusIcon, LoaderIcon, ToggleLeftIcon } from 'lucide-react'
 
 const buildColumns = (onToggle: (id: string) => void): ColumnDef<RecurringPlan, unknown>[] => [
@@ -31,7 +32,11 @@ const buildColumns = (onToggle: (id: string) => void): ColumnDef<RecurringPlan, 
   },
 ]
 
-const defaultForm = { name: '', price: '', billing_period: 'monthly', min_quantity: '1' }
+const defaultForm = {
+  name: '', price: '', billing_period: 'monthly', min_quantity: '1',
+  start_date: '', end_date: '',
+  auto_close: false, closable: true, pausable: false, renewable: true,
+}
 
 export default function RecurringPlansPage() {
   const { plans, loading, fetchPlans, createPlan, togglePlan } = usePlans()
@@ -55,10 +60,12 @@ export default function RecurringPlansPage() {
         price: parseFloat(form.price),
         billing_period: form.billing_period as RecurringPlan['billing_period'],
         min_quantity: parseInt(form.min_quantity) || 1,
-        auto_close: false,
-        closable: true,
-        pausable: false,
-        renewable: true,
+        start_date: form.start_date || undefined,
+        end_date: form.end_date || undefined,
+        auto_close: form.auto_close,
+        closable: form.closable,
+        pausable: form.pausable,
+        renewable: form.renewable,
       })
       setDialogOpen(false)
       setForm(defaultForm)
@@ -117,6 +124,32 @@ export default function RecurringPlansPage() {
             <div className="space-y-2">
               <Label>Minimum Quantity</Label>
               <Input type="number" min="1" value={form.min_quantity} onChange={e => setForm(p => ({ ...p, min_quantity: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date (optional)</Label>
+                <Input type="date" value={form.start_date} onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>End Date (optional)</Label>
+                <Input type="date" value={form.end_date} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 pt-1">
+              {([
+                ['auto_close', 'Auto Close'],
+                ['closable', 'Closable'],
+                ['pausable', 'Pausable'],
+                ['renewable', 'Renewable'],
+              ] as const).map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between">
+                  <Label className="text-sm font-normal text-slate-700">{label}</Label>
+                  <Switch
+                    checked={form[key] as boolean}
+                    onCheckedChange={v => setForm(p => ({ ...p, [key]: v }))}
+                  />
+                </div>
+              ))}
             </div>
           </div>
           <DialogFooter>
