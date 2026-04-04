@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/roleCheck');
+const c = require('../controllers/taxController');
+router.use(authenticate);
+router.get('/', c.getTaxes);
+router.post('/', requireRole('admin'), c.createTax);
+router.get('/:id', c.getTax);
+router.put('/:id', requireRole('admin'), c.updateTax);
+router.patch('/:id/toggle', requireRole('admin'), c.toggleTax);
+router.delete('/:id', requireRole('admin'), c.deleteTax);
+module.exports = router;

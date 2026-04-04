@@ -1,0 +1,18 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/roleCheck');
+const c = require('../controllers/subscriptionController');
+router.use(authenticate);
+router.get('/my', requireRole('portal'), c.getMySubscriptions);
+router.post('/from-cart', requireRole('portal'), c.fromCart);
+router.get('/', requireRole('admin','internal'), c.getSubscriptions);
+router.post('/', c.createSubscription);
+router.get('/:id', c.getSubscription);
+router.put('/:id', requireRole('admin','internal'), c.updateSubscription);
+router.patch('/:id/status', requireRole('admin','internal'), c.updateStatus);
+router.post('/:id/lines', requireRole('admin','internal'), c.addLine);
+router.put('/:id/lines/:lid', requireRole('admin','internal'), c.updateLine);
+router.delete('/:id/lines/:lid', requireRole('admin','internal'), c.deleteLine);
+router.post('/:id/invoice', requireRole('admin','internal'), c.generateInvoice);
+module.exports = router;

@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/roleCheck');
+const c = require('../controllers/invoiceController');
+router.use(authenticate);
+router.get('/customer/:cid', c.getCustomerInvoices);
+router.get('/', requireRole('admin','internal'), c.getInvoices);
+router.get('/:id', c.getInvoice);
+router.patch('/:id/confirm', requireRole('admin','internal'), c.confirmInvoice);
+router.patch('/:id/cancel', requireRole('admin'), c.cancelInvoice);
+router.get('/:id/payment-status', c.getPaymentStatus);
+module.exports = router;

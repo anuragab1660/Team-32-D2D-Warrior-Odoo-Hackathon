@@ -1,0 +1,14 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/roleCheck');
+const c = require('../controllers/templateController');
+router.use(authenticate);
+router.get('/', c.getTemplates);
+router.post('/', requireRole('admin','internal'), c.createTemplate);
+router.get('/:id', c.getTemplate);
+router.put('/:id', requireRole('admin','internal'), c.updateTemplate);
+router.post('/:id/lines', requireRole('admin','internal'), c.addTemplateLine);
+router.put('/:id/lines/:lid', requireRole('admin','internal'), c.updateTemplateLine);
+router.delete('/:id/lines/:lid', requireRole('admin','internal'), c.deleteTemplateLine);
+module.exports = router;

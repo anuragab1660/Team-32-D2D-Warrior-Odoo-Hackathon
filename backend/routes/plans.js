@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/roleCheck');
+const c = require('../controllers/planController');
+router.use(authenticate);
+router.get('/', c.getPlans);
+router.post('/', requireRole('admin','internal'), c.createPlan);
+router.get('/:id', c.getPlan);
+router.put('/:id', requireRole('admin','internal'), c.updatePlan);
+router.patch('/:id/toggle', requireRole('admin'), c.togglePlan);
+router.delete('/:id', requireRole('admin'), c.deletePlan);
+module.exports = router;

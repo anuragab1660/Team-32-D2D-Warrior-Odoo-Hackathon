@@ -1,0 +1,12 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/roleCheck');
+const c = require('../controllers/paymentController');
+router.post('/webhook', c.webhook);
+router.use(authenticate);
+router.get('/', requireRole('admin','internal'), c.getPayments);
+router.post('/create-order', c.createOrder);
+router.post('/verify', c.verifyPayment);
+router.post('/manual', requireRole('admin','internal'), c.manualPayment);
+module.exports = router;

@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/roleCheck');
+const c = require('../controllers/discountController');
+router.use(authenticate);
+router.get('/', requireRole('admin','internal'), c.getDiscounts);
+router.post('/', requireRole('admin'), c.createDiscount);
+router.get('/:id', requireRole('admin','internal'), c.getDiscount);
+router.put('/:id', requireRole('admin'), c.updateDiscount);
+router.patch('/:id/toggle', requireRole('admin'), c.toggleDiscount);
+router.delete('/:id', requireRole('admin'), c.deleteDiscount);
+module.exports = router;

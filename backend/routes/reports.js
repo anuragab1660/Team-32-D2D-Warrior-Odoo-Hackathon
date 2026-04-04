@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/roleCheck');
+const c = require('../controllers/reportController');
+router.use(authenticate, requireRole('admin','internal'));
+router.get('/dashboard', c.getDashboard);
+router.get('/monthly-revenue', c.getMonthlyRevenue);
+router.get('/active-subscriptions', c.getActiveSubscriptions);
+router.get('/invoice-summary', c.getInvoiceSummary);
+router.get('/overdue-invoices', c.getOverdueInvoices);
+router.get('/pending-invitations', requireRole('admin'), c.getPendingInvitations);
+module.exports = router;
