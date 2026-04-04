@@ -82,6 +82,7 @@ export interface Product {
   product_type: ProductType
   description?: string
   sales_price: number
+  yearly_price?: number
   cost_price: number
   image_url?: string
   is_active: boolean
@@ -306,4 +307,8 @@ export interface CartItem {
   product_name: string
   variant_name?: string
   unit_price: number
+  /** Monthly price (sales_price + variant extra) — used to recalculate when billing period changes */
+  monthly_price: number
+  /** Yearly price set by admin — falls back to calculated if not set */
+  yearly_price?: number
 }

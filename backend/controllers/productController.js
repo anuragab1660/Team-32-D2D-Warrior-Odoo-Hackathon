@@ -1,5 +1,9 @@
 const pool = require('../db');
 
+// Add yearly_price column if it doesn't exist yet
+pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS yearly_price NUMERIC(10,2)`)
+  .catch(err => console.error('products migration error:', err.message));
+
 const getPagination = (page, limit) => {
   const p = Math.max(1, parseInt(page) || 1);
   const l = Math.min(100, Math.max(1, parseInt(limit) || 20));
@@ -46,14 +50,14 @@ const getProducts = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { name, product_type, description, sales_price, cost_price, image_url } = req.body;
+    const { name, product_type, description, sales_price, yearly_price, cost_price, image_url, category, hsn_sac_code, tax_id, default_discount_id, is_active } = req.body;
     if (!name || sales_price === undefined || cost_price === undefined) {
       return res.status(400).json({ success: false, error: 'Name, sales_price, and cost_price are required' });
     }
     const { rows } = await pool.query(
-      `INSERT INTO products (name, product_type, description, sales_price, cost_price, image_url, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [name, product_type || 'service', description, parseFloat(sales_price), parseFloat(cost_price), image_url || null, req.user.id]
+      `INSERT INTO products (name, product_type, description, sales_price, yearly_price, cost_price, image_url, category, hsn_sac_code, tax_id, default_discount_id, is_active, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+      [name, product_type || 'service', description || null, parseFloat(sales_price), yearly_price !== undefined && yearly_price !== '' ? parseFloat(yearly_price) : null, parseFloat(cost_price), image_url || null, category || null, hsn_sac_code || null, tax_id || null, default_discount_id || null, is_active !== false, req.user.id]
     );
     res.status(201).json({ success: true, message: 'Product created', data: rows[0] });
   } catch (err) {
@@ -82,13 +86,32 @@ const getProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    const { name, product_type, description, sales_price, cost_price, image_url } = req.body;
+    const { name, product_type, description, sales_price, yearly_price, cost_price, image_url, category, hsn_sac_code, tax_id, default_discount_id, is_active } = req.body;
     const { rows } = await pool.query(
-      `UPDATE products SET name = COALESCE($1, name), product_type = COALESCE($2, product_type),
-       description = COALESCE($3, description), sales_price = COALESCE($4, sales_price),
-       cost_price = COALESCE($5, cost_price), image_url = COALESCE($6, image_url)
-       WHERE id = $7 RETURNING *`,
-      [name, product_type, description, sales_price !== undefined ? parseFloat(sales_price) : null, cost_price !== undefined ? parseFloat(cost_price) : null, image_url !== undefined ? image_url : null, req.params.id]
+      `UPDATE products SET
+        name = COALESCE($1, name),
+        product_type = COALESCE($2, product_type),
+        description = COALESCE($3, description),
+        sales_price = COALESCE($4, sales_price),
+        yearly_price = CASE WHEN $5::text IS NOT NULL THEN $5::numeric ELSE yearly_price END,
+        cost_price = COALESCE($6, cost_price),
+        image_url = COALESCE($7, image_url),
+        category = COALESCE($8, category),
+        hsn_sac_code = COALESCE($9, hsn_sac_code),
+        tax_id = COALESCE($10, tax_id),
+        default_discount_id = COALESCE($11, default_discount_id),
+        is_active = COALESCE($12, is_active)
+       WHERE id = $13 RETURNING *`,
+      [name, product_type, description,
+       sales_price !== undefined ? parseFloat(sales_price) : null,
+       yearly_price !== undefined && yearly_price !== '' ? String(parseFloat(yearly_price)) : null,
+       cost_price !== undefined ? parseFloat(cost_price) : null,
+       image_url !== undefined ? image_url : null,
+       category || null, hsn_sac_code || null,
+       tax_id !== undefined ? (tax_id || null) : null,
+       default_discount_id !== undefined ? (default_discount_id || null) : null,
+       is_active !== undefined ? is_active : null,
+       req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Product not found' });
     res.json({ success: true, message: 'Product updated', data: rows[0] });

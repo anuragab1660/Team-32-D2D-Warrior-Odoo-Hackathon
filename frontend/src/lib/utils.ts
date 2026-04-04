@@ -64,3 +64,43 @@ export function billingPeriodLabel(period: string): string {
   }
   return map[period] || period
 }
+
+/**
+ * Calculate the price for a given billing period based on the monthly base price.
+ * - daily:   proportional (monthly / 30)
+ * - weekly:  proportional (monthly × 7 / 30)
+ * - monthly: base price (no change)
+ * - yearly:  10× monthly (2 months free — ~16.7% discount)
+ * - onetime: same as monthly
+ */
+export function getPeriodPrice(baseMonthlyPrice: number, period: string): number {
+  switch (period) {
+    case 'daily':   return Math.max(1, Math.round(baseMonthlyPrice / 30))
+    case 'weekly':  return Math.round((baseMonthlyPrice * 7) / 30)
+    case 'monthly': return baseMonthlyPrice
+    case 'yearly':  return Math.round(baseMonthlyPrice * 10)
+    case 'onetime': return baseMonthlyPrice
+    default:        return baseMonthlyPrice
+  }
+}
+
+/**
+ * Returns annual savings vs paying monthly × 12 (0 if no savings).
+ */
+export function getPeriodSavings(baseMonthlyPrice: number, period: string): number {
+  if (period === 'yearly') return Math.round(baseMonthlyPrice * 2)
+  return 0
+}
+
+/**
+ * Returns a human-readable label like "₹1,000/month" or "₹10,000/year".
+ */
+export function formatPeriodPrice(price: number, period: string): string {
+  const periodSuffix: Record<string, string> = {
+    daily: 'day', weekly: 'week', monthly: 'month', yearly: 'year', onetime: 'one-time',
+  }
+  const suffix = periodSuffix[period] ?? period
+  return period === 'onetime'
+    ? `₹${price.toLocaleString('en-IN')}`
+    : `₹${price.toLocaleString('en-IN')}/${suffix}`
+}
