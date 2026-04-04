@@ -21,9 +21,9 @@ const columns: ColumnDef<Invoice, unknown>[] = [
     ),
   },
   {
-    accessorKey: 'customer',
+    accessorKey: 'customer_name',
     header: 'Customer',
-    cell: ({ row }) => row.original.customer?.name ?? row.original.customer_id,
+    cell: ({ row }) => (row.original as Record<string, string>).customer_name ?? row.original.customer?.name ?? row.original.customer_id,
   },
   {
     accessorKey: 'issued_date',

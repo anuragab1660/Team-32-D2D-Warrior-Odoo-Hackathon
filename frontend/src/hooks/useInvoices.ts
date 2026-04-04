@@ -47,6 +47,21 @@ export function useInvoices() {
     return data.data
   }, [])
 
+  const fetchMyInvoices = useCallback(async (filters: {
+    page?: number; limit?: number
+  } = {}) => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      params.set('page', String(filters.page || 1))
+      params.set('limit', String(filters.limit || 20))
+      const { data } = await api.get<PaginatedResponse<Invoice>>(`/api/invoices/my?${params}`)
+      setInvoices(data.data)
+      setPagination(data.pagination)
+    } catch (err) { handleApiError(err) }
+    finally { setLoading(false) }
+  }, [])
+
   const getCustomerInvoices = useCallback(async (customerId: string) => {
     const { data } = await api.get<ApiResponse<Invoice[]>>(`/api/invoices/customer/${customerId}`)
     return data.data
@@ -54,7 +69,7 @@ export function useInvoices() {
 
   return {
     invoices, loading, pagination,
-    fetchInvoices, getInvoice, getPaymentStatus,
+    fetchInvoices, fetchMyInvoices, getInvoice, getPaymentStatus,
     confirmInvoice, cancelInvoice, getCustomerInvoices,
   }
 }

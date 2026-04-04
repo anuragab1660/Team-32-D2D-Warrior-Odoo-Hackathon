@@ -74,4 +74,20 @@ const getCustomerInvoices = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch invoices' }); }
 };
 
-module.exports = { getInvoices, getInvoice, confirmInvoice, cancelInvoice, getPaymentStatus, getCustomerInvoices };
+// GET /api/invoices/my (portal user's own invoices)
+const getMyInvoices = async (req, res) => {
+  try {
+    const custRes = await pool.query('SELECT id FROM customers WHERE user_id=$1', [req.user.id]);
+    if (!custRes.rows[0]) return res.status(404).json({ success: false, error: 'Customer profile not found' });
+    const { page, limit } = req.query;
+    const { limit: lim, offset, page: pg } = (() => { const p=Math.max(1,parseInt(page)||1); const l=Math.min(100,parseInt(limit)||20); return {limit:l,offset:(p-1)*l,page:p}; })();
+    const total = parseInt((await pool.query('SELECT COUNT(*) FROM invoices WHERE customer_id=$1', [custRes.rows[0].id])).rows[0].count);
+    const { rows } = await pool.query(
+      'SELECT * FROM invoices WHERE customer_id=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+      [custRes.rows[0].id, lim, offset]
+    );
+    res.json({ success: true, data: rows, pagination: { page: pg, limit: lim, total, pages: Math.ceil(total/lim) } });
+  } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch invoices' }); }
+};
+
+module.exports = { getInvoices, getInvoice, confirmInvoice, cancelInvoice, getPaymentStatus, getCustomerInvoices, getMyInvoices };

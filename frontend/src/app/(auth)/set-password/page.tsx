@@ -40,7 +40,7 @@ function SetPasswordForm() {
     setIsLoading(true)
     setError('')
     try {
-      await api.post('/api/auth/set-password', { token, password: data.password })
+      await api.post('/api/auth/accept-invite', { token, password: data.password })
       toast.success('Password set successfully! Please log in.')
       router.push('/login')
     } catch (err: unknown) {

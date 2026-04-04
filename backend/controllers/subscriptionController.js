@@ -202,7 +202,10 @@ const generateInvoice = async (req, res) => {
     );
     if (!subRes.rows[0]) return res.status(404).json({ success: false, error: 'Subscription not found' });
     const sub = subRes.rows[0];
-    const linesRes = await pool.query('SELECT * FROM subscription_lines WHERE subscription_id=$1', [req.params.id]);
+    const linesRes = await pool.query(
+      'SELECT sl.*, p.name as product_name FROM subscription_lines sl JOIN products p ON p.id=sl.product_id WHERE sl.subscription_id=$1',
+      [req.params.id]
+    );
     const lines = linesRes.rows;
     const subtotal = lines.reduce((sum, l) => sum + parseFloat(l.unit_price) * parseInt(l.quantity), 0);
     const taxTotal = lines.reduce((sum, l) => sum + parseFloat(l.tax_amount), 0);
@@ -219,8 +222,8 @@ const generateInvoice = async (req, res) => {
       const inv = invRes.rows[0];
       for (const line of lines) {
         await client.query(
-          'INSERT INTO invoice_lines (invoice_id,product_id,quantity,unit_price,tax_amount,discount_amount,line_total) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-          [inv.id, line.product_id, line.quantity, line.unit_price, line.tax_amount, line.discount_amount, line.total_amount]
+          'INSERT INTO invoice_lines (invoice_id,product_id,description,quantity,unit_price,tax_amount,discount_amount,line_total) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+          [inv.id, line.product_id, line.product_name || null, line.quantity, line.unit_price, line.tax_amount, line.discount_amount, line.total_amount]
         );
       }
       await client.query('COMMIT');
