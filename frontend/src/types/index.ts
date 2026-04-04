@@ -254,6 +254,9 @@ export interface DashboardMetrics {
   monthly_revenue: number
   overdue_invoices: number
   pending_payments: number
+  expiring_soon: number
+  total_users: number
+  total_customers: number
 }
 
 export interface MonthlyRevenue {

@@ -102,10 +102,10 @@ export default function ProductDetailPortalPage() {
             {variants.length > 0 && (
               <div className="space-y-2">
                 <Label>Select Variant</Label>
-                <Select value={selectedVariant} onValueChange={setSelectedVariant}>
+                <Select value={selectedVariant || '__none__'} onValueChange={v => setSelectedVariant(v === '__none__' ? '' : v)}>
                   <SelectTrigger><SelectValue placeholder="Choose variant" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No variant</SelectItem>
+                    <SelectItem value="__none__">No variant</SelectItem>
                     {variants.map(v => (
                       <SelectItem key={v.id} value={v.id}>
                         {v.attribute}: {v.value} {v.extra_price > 0 ? `(+₹${v.extra_price})` : ''}
@@ -119,10 +119,10 @@ export default function ProductDetailPortalPage() {
             {plans.length > 0 && (
               <div className="space-y-2">
                 <Label>Billing Plan (optional)</Label>
-                <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                <Select value={selectedPlan || '__none__'} onValueChange={v => setSelectedPlan(v === '__none__' ? '' : v)}>
                   <SelectTrigger><SelectValue placeholder="One-time purchase" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">One-time purchase</SelectItem>
+                    <SelectItem value="__none__">One-time purchase</SelectItem>
                     {plans.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.name} — ₹{p.price}/{p.billing_period}</SelectItem>
                     ))}

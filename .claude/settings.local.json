@@ -18,7 +18,10 @@
       "Bash(docker exec:*)",
       "Bash(docker restart:*)",
       "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
-      "mcp__plugin_context-mode_context-mode__ctx_search"
+      "mcp__plugin_context-mode_context-mode__ctx_search",
+      "Bash(docker cp:*)",
+      "Bash(MSYS_NO_PATHCONV=1 docker cp \"C:/Users/USER/Downloads/seed_data.sql\" prosubx_postgres:/tmp/seed_data.sql)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec prosubx_postgres psql -U postgres -d subscription_db -f /tmp/seed_data.sql)"
     ]
   }
 }

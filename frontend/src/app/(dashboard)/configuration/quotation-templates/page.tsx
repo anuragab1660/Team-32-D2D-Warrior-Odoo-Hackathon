@@ -92,10 +92,10 @@ export default function QuotationTemplatesPage() {
             </div>
             <div className="space-y-2">
               <Label>Recurring Plan (optional)</Label>
-              <Select value={form.recurring_plan_id} onValueChange={v => setForm(p => ({ ...p, recurring_plan_id: v }))}>
+              <Select value={form.recurring_plan_id || '__none__'} onValueChange={v => setForm(p => ({ ...p, recurring_plan_id: v === '__none__' ? '' : v }))}>
                 <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No plan</SelectItem>
+                  <SelectItem value="__none__">No plan</SelectItem>
                   {plans.map(p => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
