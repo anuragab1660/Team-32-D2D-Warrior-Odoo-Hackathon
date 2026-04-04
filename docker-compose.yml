@@ -47,7 +47,7 @@ services:
       RAZORPAY_KEY_ID: rzp_test_xxxxxxxxxxxx
       RAZORPAY_KEY_SECRET: your_razorpay_key_secret
       RAZORPAY_WEBHOOK_SECRET: your_webhook_secret
-      CLOUDINARY_CLOUD_NAME: Root
+      CLOUDINARY_CLOUD_NAME: dlgk8ngmu
       CLOUDINARY_API_KEY: 451714164697449
       CLOUDINARY_API_SECRET: lphUf_yyi2uNyPxNaBeLzzVRlRw
     depends_on:
