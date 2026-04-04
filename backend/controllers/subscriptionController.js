@@ -34,9 +34,19 @@ const getMySubscriptions = async (req, res) => {
     const custRes = await pool.query('SELECT id FROM customers WHERE user_id=$1', [req.user.id]);
     if (!custRes.rows[0]) return res.status(404).json({ success: false, error: 'Customer profile not found' });
     const { rows } = await pool.query(
-      `SELECT s.*, rp.name as plan_name, rp.price as plan_price, rp.billing_period
-       FROM subscriptions s LEFT JOIN recurring_plans rp ON rp.id=s.plan_id
-       WHERE s.customer_id=$1 ORDER BY s.created_at DESC`, [custRes.rows[0].id]
+      `SELECT s.*,
+              rp.name as plan_name, rp.price as plan_price,
+              COALESCE(s.billing_period, rp.billing_period::varchar) as billing_period,
+              COUNT(sl.id) as lines_count,
+              COALESCE(SUM(sl.total_amount), 0) as total_amount,
+              STRING_AGG(DISTINCT p.name, ', ') as product_names
+       FROM subscriptions s
+       LEFT JOIN recurring_plans rp ON rp.id=s.plan_id
+       LEFT JOIN subscription_lines sl ON sl.subscription_id=s.id
+       LEFT JOIN products p ON p.id=sl.product_id
+       WHERE s.customer_id=$1
+       GROUP BY s.id, rp.name, rp.price, rp.billing_period
+       ORDER BY s.created_at DESC`, [custRes.rows[0].id]
     );
     res.json({ success: true, data: rows });
   } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch subscriptions' }); }
@@ -235,7 +245,7 @@ const generateInvoice = async (req, res) => {
 
 const fromCart = async (req, res) => {
   try {
-    const { items } = req.body;
+    const { items, billing_period, start_date: bodyStartDate, plan_id: bodyPlanId, notes } = req.body;
     if (!items || !items.length) return res.status(400).json({ success: false, error: 'Cart is empty' });
 
     // Get portal user's customer record
@@ -243,27 +253,57 @@ const fromCart = async (req, res) => {
     if (!custRes.rows[0]) return res.status(400).json({ success: false, error: 'Customer profile not found. Please complete your profile.' });
     const customer_id = custRes.rows[0].id;
 
-    const plan_id = items.find(i => i.plan_id)?.plan_id || null;
-    const start_date = new Date().toISOString().split('T')[0];
+    const plan_id = bodyPlanId || items.find(i => i.plan_id)?.plan_id || null;
+    const bp = billing_period || 'monthly';
+    const startBase = bodyStartDate ? new Date(bodyStartDate) : new Date();
+    const start_date = startBase.toISOString().split('T')[0];
+
+    let expiration_date = null;
+    if (bp === 'daily')   { const d = new Date(startBase); d.setDate(d.getDate() + 1); expiration_date = d; }
+    if (bp === 'weekly')  { const d = new Date(startBase); d.setDate(d.getDate() + 7); expiration_date = d; }
+    if (bp === 'monthly') { const d = new Date(startBase); d.setMonth(d.getMonth() + 1); expiration_date = d; }
+    if (bp === 'yearly')  { const d = new Date(startBase); d.setFullYear(d.getFullYear() + 1); expiration_date = d; }
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       const { rows } = await client.query(
-        `INSERT INTO subscriptions (customer_id, plan_id, start_date, created_by, subscription_number)
-         VALUES ($1, $2, $3, $4, '') RETURNING *`,
-        [customer_id, plan_id, start_date, req.user.id]
+        `INSERT INTO subscriptions (customer_id, plan_id, start_date, expiration_date, status, notes, created_by, subscription_number, billing_period)
+         VALUES ($1, $2, $3, $4, 'active', $5, $6, '', $7) RETURNING *`,
+        [customer_id, plan_id, start_date, expiration_date, notes || null, req.user.id, bp]
       );
       const sub = rows[0];
 
+      let subtotal = 0;
       for (const item of items) {
+        const qty = item.quantity || 1;
+        const up = parseFloat(item.unit_price) || 0;
+        subtotal += qty * up;
         await client.query(
-          'INSERT INTO subscription_lines (subscription_id, product_id, variant_id, quantity, unit_price) VALUES ($1,$2,$3,$4,$5)',
-          [sub.id, item.product_id, item.variant_id || null, item.quantity || 1, item.unit_price]
+          'INSERT INTO subscription_lines (subscription_id, product_id, variant_id, quantity, unit_price, total_amount) VALUES ($1,$2,$3,$4,$5,$6)',
+          [sub.id, item.product_id, item.variant_id || null, qty, up, qty * up]
         );
       }
+
+      // Auto-create and confirm invoice so Razorpay can charge immediately
+      const invRes = await client.query(
+        `INSERT INTO invoices (invoice_number, subscription_id, customer_id, subtotal, tax_total, discount_total, grand_total, status, created_by, issued_date)
+         VALUES ('', $1, $2, $3, 0, 0, $3, 'confirmed', $4, CURRENT_DATE) RETURNING *`,
+        [sub.id, customer_id, subtotal, req.user.id]
+      );
+      const inv = invRes.rows[0];
+
+      for (const item of items) {
+        const qty = item.quantity || 1;
+        const up = parseFloat(item.unit_price) || 0;
+        await client.query(
+          'INSERT INTO invoice_lines (invoice_id, product_id, description, quantity, unit_price, tax_amount, discount_amount, line_total) VALUES ($1,$2,$3,$4,$5,0,0,$6)',
+          [inv.id, item.product_id, item.product_name || null, qty, up, qty * up]
+        );
+      }
+
       await client.query('COMMIT');
-      res.status(201).json({ success: true, message: 'Order placed successfully', data: sub });
+      res.status(201).json({ success: true, message: 'Order placed successfully', data: { ...sub, invoice_id: inv.id } });
     } catch (err) { await client.query('ROLLBACK'); throw err; }
     finally { client.release(); }
   } catch (err) { console.error(err); res.status(500).json({ success: false, error: 'Failed to place order' }); }

@@ -21,7 +21,13 @@
       "mcp__plugin_context-mode_context-mode__ctx_search",
       "Bash(docker cp:*)",
       "Bash(MSYS_NO_PATHCONV=1 docker cp \"C:/Users/USER/Downloads/seed_data.sql\" prosubx_postgres:/tmp/seed_data.sql)",
-      "Bash(MSYS_NO_PATHCONV=1 docker exec prosubx_postgres psql -U postgres -d subscription_db -f /tmp/seed_data.sql)"
+      "Bash(MSYS_NO_PATHCONV=1 docker exec prosubx_postgres psql -U postgres -d subscription_db -f /tmp/seed_data.sql)",
+      "Bash(node -e \"const l = require\\('D:/ProsubX/ProsubX/node_modules/lucide-react'\\); console.log\\('BuildingIcon' in l, 'Building2Icon' in l, 'ShieldIcon' in l\\)\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx --no-install tsc --noEmit)",
+      "Bash(node node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(docker ps:*)",
+      "Bash(xattr:*)"
     ]
   }
 }

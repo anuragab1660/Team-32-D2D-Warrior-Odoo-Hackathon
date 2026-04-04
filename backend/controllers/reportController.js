@@ -61,4 +61,63 @@ const getPendingInvitations = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch pending invitations' }); }
 };
 
-module.exports = { getDashboard, getMonthlyRevenue, getActiveSubscriptions, getInvoiceSummary, getOverdueInvoices, getPendingInvitations };
+const getSubscriptionStatusBreakdown = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT status, COUNT(*) as count FROM subscriptions GROUP BY status ORDER BY count DESC`
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch subscription breakdown' }); }
+};
+
+const getRecentActivity = async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT * FROM (
+        SELECT 'subscription' as type, s.id, s.subscription_number as ref,
+               u.name as customer_name, s.created_at,
+               'New subscription created' as description
+        FROM subscriptions s
+        JOIN customers c ON c.id = s.customer_id
+        JOIN users u ON u.id = c.user_id
+        UNION ALL
+        SELECT 'payment' as type, p.id, i.invoice_number as ref,
+               u.name as customer_name, p.created_at,
+               'Payment received for invoice' as description
+        FROM payments p
+        JOIN invoices i ON i.id = p.invoice_id
+        JOIN customers c ON c.id = p.customer_id
+        JOIN users u ON u.id = c.user_id
+        WHERE p.status = 'success'
+        UNION ALL
+        SELECT 'invoice' as type, i.id, i.invoice_number as ref,
+               u.name as customer_name, i.created_at,
+               'Invoice generated' as description
+        FROM invoices i
+        JOIN customers c ON c.id = i.customer_id
+        JOIN users u ON u.id = c.user_id
+      ) activity
+      ORDER BY created_at DESC
+      LIMIT 10
+    `);
+    res.json({ success: true, data: rows });
+  } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch recent activity' }); }
+};
+
+const getTopProducts = async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT p.id, p.name, COALESCE(SUM(pay.amount), 0) as total_revenue, COUNT(DISTINCT il.invoice_id) as invoice_count
+      FROM products p
+      LEFT JOIN invoice_lines il ON il.product_id = p.id
+      LEFT JOIN invoices i ON i.id = il.invoice_id
+      LEFT JOIN payments pay ON pay.invoice_id = i.id AND pay.status = 'success'
+      GROUP BY p.id, p.name
+      ORDER BY total_revenue DESC
+      LIMIT 10
+    `);
+    res.json({ success: true, data: rows });
+  } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch top products' }); }
+};
+
+module.exports = { getDashboard, getMonthlyRevenue, getActiveSubscriptions, getInvoiceSummary, getOverdueInvoices, getPendingInvitations, getSubscriptionStatusBreakdown, getRecentActivity, getTopProducts };
