@@ -44,6 +44,7 @@ export default function PortalInvoiceDetailPage() {
     setPaying(true)
     try {
       const order = await createOrder(invoice.id)
+      if (!order) return
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,

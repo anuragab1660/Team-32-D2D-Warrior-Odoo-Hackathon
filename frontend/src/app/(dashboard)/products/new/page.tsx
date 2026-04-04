@@ -65,7 +65,7 @@ export default function NewProductPage() {
     setError('')
     try {
       const product = await createProduct({ ...data, image_url: imageUrl || undefined })
-      router.push(`/products/${product.id}`)
+      if (product) router.push(`/products/${product.id}`)
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e?.response?.data?.error || 'Failed to create product')

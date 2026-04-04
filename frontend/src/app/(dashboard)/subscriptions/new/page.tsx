@@ -59,7 +59,7 @@ export default function NewSubscriptionPage() {
         payment_terms: data.payment_terms || undefined,
         notes: data.notes || undefined,
       })
-      router.push(`/subscriptions/${sub.id}`)
+      if (sub) router.push(`/subscriptions/${sub.id}`)
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e?.response?.data?.error || 'Failed to create subscription')
