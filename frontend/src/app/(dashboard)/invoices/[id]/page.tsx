@@ -147,7 +147,7 @@ export default function InvoiceDetailPage() {
                     <tbody>
                       {invoice.lines.map(line => (
                         <tr key={line.id} className="border-b border-slate-100">
-                          <td className="py-2">{line.description || (line as Record<string, string>).product_name}</td>
+                          <td className="py-2">{line.description || (line as unknown as Record<string, string>).product_name}</td>
                           <td className="py-2 text-right">{line.quantity}</td>
                           <td className="py-2 text-right">₹{line.unit_price.toLocaleString()}</td>
                           <td className="py-2 text-right font-medium">₹{line.line_total.toLocaleString()}</td>
