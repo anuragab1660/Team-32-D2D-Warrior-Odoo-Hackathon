@@ -8,11 +8,11 @@ import { Card, CardContent } from '@/components/ui/card'
 import { FileTextIcon } from 'lucide-react'
 
 export default function PortalInvoicesPage() {
-  const { invoices, loading, fetchInvoices } = useInvoices()
+  const { invoices, loading, fetchMyInvoices } = useInvoices()
 
   useEffect(() => {
-    fetchInvoices()
-  }, [fetchInvoices])
+    fetchMyInvoices()
+  }, [fetchMyInvoices])
 
   return (
     <div className="space-y-6">

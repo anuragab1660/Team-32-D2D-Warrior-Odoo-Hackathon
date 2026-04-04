@@ -13,16 +13,16 @@ import { ShoppingBagIcon, FileTextIcon, ZapIcon, ArrowRightIcon } from 'lucide-r
 export default function PortalHomePage() {
   const { user } = useAuth()
   const { subscriptions, fetchMySubscriptions } = useSubscriptions()
-  const { invoices, fetchInvoices } = useInvoices()
+  const { invoices, fetchMyInvoices } = useInvoices()
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     const load = async () => {
-      await Promise.all([fetchMySubscriptions(), fetchInvoices()])
+      await Promise.all([fetchMySubscriptions(), fetchMyInvoices()])
       setLoaded(true)
     }
     load()
-  }, [fetchMySubscriptions, fetchInvoices])
+  }, [fetchMySubscriptions, fetchMyInvoices])
 
   const activeSubscriptions = subscriptions.filter(s => s.status === 'active')
   const pendingInvoices = invoices.filter(i => i.status === 'confirmed')
@@ -81,7 +81,7 @@ export default function PortalHomePage() {
                 <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
                   <div>
                     <p className="text-sm font-medium text-slate-800">{sub.subscription_number}</p>
-                    <p className="text-xs text-slate-500">{sub.plan?.name ?? 'No plan'} · Started {new Date(sub.start_date).toLocaleDateString()}</p>
+                    <p className="text-xs text-slate-500">{(sub as Record<string, string>).plan_name ?? sub.plan?.name ?? 'No plan'} · Started {new Date(sub.start_date).toLocaleDateString()}</p>
                   </div>
                   <StatusBadge status={sub.status} type="subscription" />
                 </div>
@@ -95,7 +95,7 @@ export default function PortalHomePage() {
         <Card className="border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-base">Invoices Due</CardTitle>
-            <Link href="/invoices" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+            <Link href="/my-invoices" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
               View all <ArrowRightIcon className="h-3 w-3" />
             </Link>
           </CardHeader>
@@ -109,7 +109,7 @@ export default function PortalHomePage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-slate-900">₹{inv.grand_total.toLocaleString()}</p>
-                    <Link href={`/invoices/${inv.id}`} className="text-xs text-indigo-600 hover:underline">Pay now</Link>
+                    <Link href={`/my-invoices/${inv.id}`} className="text-xs text-indigo-600 hover:underline">Pay now</Link>
                   </div>
                 </div>
               ))}

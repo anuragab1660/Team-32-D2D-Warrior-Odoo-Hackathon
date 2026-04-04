@@ -29,9 +29,8 @@ export function useSubscriptions() {
   const fetchMySubscriptions = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await api.get<PaginatedResponse<Subscription>>('/api/subscriptions/my')
+      const { data } = await api.get<ApiResponse<Subscription[]>>('/api/subscriptions/my')
       setSubscriptions(data.data)
-      setPagination(data.pagination)
     } catch (err) { handleApiError(err) }
     finally { setLoading(false) }
   }, [])
