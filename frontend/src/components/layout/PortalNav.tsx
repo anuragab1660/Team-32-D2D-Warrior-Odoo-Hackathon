@@ -99,7 +99,7 @@ export function PortalNav() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="gap-2 cursor-pointer">
-                  <Link href="/profile"><UserIcon className="h-4 w-4" />Profile</Link>
+                  <Link href="/my-account"><UserIcon className="h-4 w-4" />My Account</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer text-red-600 focus:text-red-600">

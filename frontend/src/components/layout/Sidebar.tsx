@@ -17,7 +17,7 @@ interface NavItem {
   href: string
   icon: React.ElementType
   roles?: string[]
-  children?: { label: string; href: string }[]
+  children?: { label: string; href: string; roles?: string[] }[]
 }
 
 const navItems: NavItem[] = [
@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
     children: [
       { label: 'Recurring Plans', href: '/configuration/recurring-plans' },
       { label: 'Templates', href: '/configuration/quotation-templates' },
-      { label: 'Discounts', href: '/configuration/discounts' },
+      { label: 'Discounts', href: '/configuration/discounts', roles: ['admin'] },
       { label: 'Taxes', href: '/configuration/taxes' },
     ],
   },
@@ -86,7 +86,7 @@ export function Sidebar() {
                 </button>
                 {isExpanded && (
                   <div className="ml-7 mt-0.5 space-y-0.5 pl-3 border-l border-slate-200">
-                    {item.children.map(child => (
+                    {item.children.filter(child => !child.roles || child.roles.includes(user?.role ?? '')).map(child => (
                       <Link
                         key={child.href}
                         href={child.href}

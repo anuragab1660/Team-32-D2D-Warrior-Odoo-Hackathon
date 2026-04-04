@@ -356,4 +356,36 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { login, signup, verifyEmail, createInternalUser, acceptInvite, resendInvite, forgotPassword, resetPassword, refreshToken, getMe };
+const changePassword = async (req, res) => {
+  const { current_password, new_password } = req.body;
+  if (!current_password || !new_password) return res.status(400).json({ success: false, error: 'Both current and new password are required' });
+  if (new_password.length < 8) return res.status(400).json({ success: false, error: 'New password must be at least 8 characters' });
+  try {
+    const { rows } = await pool.query('SELECT password_hash FROM users WHERE id=$1', [req.user.id]);
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'User not found' });
+    const valid = await bcrypt.compare(current_password, rows[0].password_hash);
+    if (!valid) return res.status(400).json({ success: false, error: 'Current password is incorrect' });
+    const hash = await bcrypt.hash(new_password, 12);
+    await pool.query('UPDATE users SET password_hash=$1 WHERE id=$2', [hash, req.user.id]);
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to change password' });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  const { name, phone, address } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'UPDATE users SET name=COALESCE($1,name) WHERE id=$2 RETURNING id,name,email,role',
+      [name || null, req.user.id]
+    );
+    res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+};
+
+module.exports = { login, signup, verifyEmail, createInternalUser, acceptInvite, resendInvite, forgotPassword, resetPassword, refreshToken, getMe, changePassword, updateProfile };
