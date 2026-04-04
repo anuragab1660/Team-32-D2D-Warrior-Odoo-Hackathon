@@ -1,24 +1,24 @@
 import type { SubscriptionStatus, InvoiceStatus, PaymentStatus } from '@/types'
 
-const subscriptionBadgeClass: Record<SubscriptionStatus, string> = {
-  draft: 'bg-slate-100 text-slate-600 border-slate-200',
-  quotation: 'bg-blue-100 text-blue-700 border-blue-200',
-  confirmed: 'bg-violet-100 text-violet-700 border-violet-200',
-  active: 'bg-green-100 text-green-700 border-green-200',
-  closed: 'bg-slate-200 text-slate-500 border-slate-300',
+const subscriptionConfig: Record<SubscriptionStatus, { label: string; cls: string }> = {
+  draft:     { label: 'Draft',     cls: 'status-draft' },
+  quotation: { label: 'Quotation', cls: 'status-blue' },
+  confirmed: { label: 'Confirmed', cls: 'status-purple' },
+  active:    { label: 'Active',    cls: 'status-active' },
+  closed:    { label: 'Closed',    cls: 'status-draft' },
 }
 
-const invoiceBadgeClass: Record<InvoiceStatus, string> = {
-  draft: 'bg-slate-100 text-slate-600 border-slate-200',
-  confirmed: 'bg-blue-100 text-blue-700 border-blue-200',
-  paid: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  cancelled: 'bg-red-100 text-red-700 border-red-200',
+const invoiceConfig: Record<InvoiceStatus, { label: string; cls: string }> = {
+  draft:     { label: 'Draft',     cls: 'status-draft' },
+  confirmed: { label: 'Confirmed', cls: 'status-blue' },
+  paid:      { label: 'Paid',      cls: 'status-active' },
+  cancelled: { label: 'Cancelled', cls: 'status-error' },
 }
 
-const paymentBadgeClass: Record<PaymentStatus, string> = {
-  pending: 'bg-amber-100 text-amber-700 border-amber-200',
-  success: 'bg-green-100 text-green-700 border-green-200',
-  failed: 'bg-red-100 text-red-700 border-red-200',
+const paymentConfig: Record<PaymentStatus, { label: string; cls: string }> = {
+  pending: { label: 'Pending', cls: 'status-pending' },
+  success: { label: 'Paid',    cls: 'status-active' },
+  failed:  { label: 'Failed',  cls: 'status-error' },
 }
 
 interface StatusBadgeProps {
@@ -27,25 +27,34 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, type }: StatusBadgeProps) {
-  let className = 'bg-slate-100 text-slate-600 border-slate-200'
-  if (type === 'subscription') className = subscriptionBadgeClass[status as SubscriptionStatus] || className
-  else if (type === 'invoice') className = invoiceBadgeClass[status as InvoiceStatus] || className
-  else if (type === 'payment') className = paymentBadgeClass[status as PaymentStatus] || className
+  let cls = 'status-draft'
+  let label = status.charAt(0).toUpperCase() + status.slice(1)
 
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${className}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  )
+  if (type === 'subscription') {
+    const cfg = subscriptionConfig[status as SubscriptionStatus]
+    if (cfg) { cls = cfg.cls; label = cfg.label }
+  } else if (type === 'invoice') {
+    const cfg = invoiceConfig[status as InvoiceStatus]
+    if (cfg) { cls = cfg.cls; label = cfg.label }
+  } else if (type === 'payment') {
+    const cfg = paymentConfig[status as PaymentStatus]
+    if (cfg) { cls = cfg.cls; label = cfg.label }
+  }
+
+  return <span className={cls}>{label}</span>
 }
 
-export function ActiveBadge({ isActive, activeLabel = 'Active', inactiveLabel = 'Inactive' }: {
-  isActive: boolean; activeLabel?: string; inactiveLabel?: string
+export function ActiveBadge({
+  isActive,
+  activeLabel = 'Active',
+  inactiveLabel = 'Inactive',
+}: {
+  isActive: boolean
+  activeLabel?: string
+  inactiveLabel?: string
 }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
-      isActive ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-500 border-slate-200'
-    }`}>
+    <span className={isActive ? 'status-active' : 'status-draft'}>
       {isActive ? activeLabel : inactiveLabel}
     </span>
   )

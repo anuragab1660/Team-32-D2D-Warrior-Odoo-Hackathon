@@ -6,25 +6,45 @@ import { usePlans } from '@/hooks/usePlans'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { ActiveBadge } from '@/components/shared/StatusBadge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { QuotationTemplate } from '@/types'
-import { PlusIcon, LoaderIcon } from 'lucide-react'
+import { PlusIcon, LoaderIcon, XIcon } from 'lucide-react'
+
+const fieldLabel = (text: string) => (
+  <span
+    className="text-xs font-semibold uppercase tracking-wider"
+    style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+  >
+    {text}
+  </span>
+)
 
 const buildColumns = (): ColumnDef<QuotationTemplate, unknown>[] => [
-  { accessorKey: 'name', header: 'Name', cell: ({ row }) => <span className="font-medium text-slate-900">{row.original.name}</span> },
+  {
+    accessorKey: 'name',
+    header: 'Name',
+    cell: ({ row }) => (
+      <span className="font-semibold" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface)' }}>
+        {row.original.name}
+      </span>
+    ),
+  },
   { accessorKey: 'validity_days', header: 'Validity (days)' },
-  { accessorKey: 'plan', header: 'Plan', cell: ({ row }) => row.original.plan?.name ?? '—' },
+  {
+    accessorKey: 'plan',
+    header: 'Plan',
+    cell: ({ row }) => row.original.plan?.name ?? '—',
+  },
   {
     id: 'lines',
     header: 'Lines',
     cell: ({ row }) => row.original.lines?.length ?? 0,
   },
-  { accessorKey: 'is_active', header: 'Status', cell: ({ row }) => <ActiveBadge isActive={row.original.is_active} /> },
+  {
+    accessorKey: 'is_active',
+    header: 'Status',
+    cell: ({ row }) => <ActiveBadge isActive={row.original.is_active} />,
+  },
 ]
 
 const defaultForm = { name: '', validity_days: '30', recurring_plan_id: '' }
@@ -64,9 +84,9 @@ export default function QuotationTemplatesPage() {
         title="Quotation Templates"
         description="Pre-configured templates for creating subscriptions quickly"
         action={
-          <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+          <button onClick={() => setDialogOpen(true)} className="btn-gradient flex items-center gap-2">
             <PlusIcon className="h-4 w-4" />New Template
-          </Button>
+          </button>
         }
       />
 
@@ -78,39 +98,77 @@ export default function QuotationTemplatesPage() {
         emptyDescription="Create templates to speed up subscription creation."
       />
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>New Quotation Template</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Template Name</Label>
-              <Input placeholder="Basic Monthly Template" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+      {dialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setDialogOpen(false) }}
+        >
+          <div className="glass-panel w-full max-w-md p-6" style={{ animation: 'fade-in-scale 0.2s ease' }}>
+            <div className="flex items-center justify-between mb-6">
+              <h2
+                className="text-lg font-bold"
+                style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)', letterSpacing: '-0.02em' }}
+              >
+                New Quotation Template
+              </h2>
+              <button
+                onClick={() => setDialogOpen(false)}
+                className="h-8 w-8 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity"
+                style={{ background: 'var(--surface-container-low)', color: 'var(--on-surface-muted)' }}
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
             </div>
-            <div className="space-y-2">
-              <Label>Validity (days)</Label>
-              <Input type="number" min="1" value={form.validity_days} onChange={e => setForm(p => ({ ...p, validity_days: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Recurring Plan (optional)</Label>
-              <Select value={form.recurring_plan_id || '__none__'} onValueChange={v => setForm(p => ({ ...p, recurring_plan_id: v === '__none__' ? '' : v }))}>
-                <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">No plan</SelectItem>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                {fieldLabel('Template Name')}
+                <input
+                  placeholder="Basic Monthly Template"
+                  value={form.name}
+                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                  className="input-soft w-full"
+                />
+              </div>
+              <div className="space-y-1.5">
+                {fieldLabel('Validity (days)')}
+                <input
+                  type="number"
+                  min="1"
+                  value={form.validity_days}
+                  onChange={e => setForm(p => ({ ...p, validity_days: e.target.value }))}
+                  className="input-soft w-full"
+                />
+              </div>
+              <div className="space-y-1.5">
+                {fieldLabel('Recurring Plan (optional)')}
+                <select
+                  className="input-soft w-full"
+                  value={form.recurring_plan_id}
+                  onChange={e => setForm(p => ({ ...p, recurring_plan_id: e.target.value }))}
+                >
+                  <option value="">No plan</option>
                   {plans.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleCreate}
+                disabled={saving || !form.name}
+                className="btn-gradient flex items-center gap-2 flex-1 justify-center"
+                style={{ opacity: (saving || !form.name) ? 0.7 : 1 }}
+              >
+                {saving ? <><LoaderIcon className="h-4 w-4 animate-spin" />Creating...</> : 'Create'}
+              </button>
+              <button onClick={() => setDialogOpen(false)} className="btn-soft">Cancel</button>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={saving || !form.name} className="bg-indigo-600 hover:bg-indigo-700">
-              {saving ? <><LoaderIcon className="mr-2 h-4 w-4 animate-spin" />Creating...</> : 'Create'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   )
 }

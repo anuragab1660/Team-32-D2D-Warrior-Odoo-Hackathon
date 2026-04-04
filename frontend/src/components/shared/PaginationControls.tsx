@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 
 interface PaginationControlsProps {
@@ -22,41 +21,66 @@ export function PaginationControls({ page, totalPages, onPageChange, className }
     pages.push(totalPages)
   }
 
+  const btnBase: React.CSSProperties = {
+    height: 36,
+    minWidth: 36,
+    borderRadius: 10,
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '0.8125rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.15s ease',
+    border: 'none',
+  }
+
   return (
-    <div className={`flex items-center gap-1 ${className ?? ''}`}>
-      <Button
-        variant="outline" size="icon"
+    <div className={`flex items-center gap-1 mt-4 ${className ?? ''}`}>
+      <button
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1}
-        className="h-8 w-8"
+        style={{
+          ...btnBase,
+          background: 'var(--surface-container-low)',
+          color: page === 1 ? 'var(--on-surface-muted)' : 'var(--on-surface-variant)',
+          opacity: page === 1 ? 0.5 : 1,
+        }}
       >
         <ChevronLeftIcon className="h-4 w-4" />
-      </Button>
+      </button>
 
       {pages.map((p, i) =>
         p === '...' ? (
-          <span key={`ellipsis-${i}`} className="px-2 text-sm text-slate-400">…</span>
+          <span key={`ellipsis-${i}`} className="px-2 text-sm" style={{ color: 'var(--on-surface-muted)' }}>…</span>
         ) : (
-          <Button
+          <button
             key={p}
-            variant={p === page ? 'default' : 'outline'}
-            size="sm"
             onClick={() => onPageChange(p as number)}
-            className="h-8 w-8 p-0 text-xs"
+            style={{
+              ...btnBase,
+              background: p === page ? 'linear-gradient(135deg, #063669, #274e82)' : 'var(--surface-container-low)',
+              color: p === page ? 'white' : 'var(--on-surface-variant)',
+            }}
           >
             {p}
-          </Button>
+          </button>
         )
       )}
 
-      <Button
-        variant="outline" size="icon"
+      <button
         onClick={() => onPageChange(page + 1)}
         disabled={page === totalPages}
-        className="h-8 w-8"
+        style={{
+          ...btnBase,
+          background: 'var(--surface-container-low)',
+          color: page === totalPages ? 'var(--on-surface-muted)' : 'var(--on-surface-variant)',
+          opacity: page === totalPages ? 0.5 : 1,
+        }}
       >
         <ChevronRightIcon className="h-4 w-4" />
-      </Button>
+      </button>
     </div>
   )
 }

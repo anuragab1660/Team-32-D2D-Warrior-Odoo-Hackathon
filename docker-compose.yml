@@ -69,6 +69,8 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:5000
       NEXT_PUBLIC_RAZORPAY_KEY_ID: rzp_test_xxxxxxxxxxxx
       WATCHPACK_POLLING: "true"
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
     depends_on:
       - backend
     volumes:

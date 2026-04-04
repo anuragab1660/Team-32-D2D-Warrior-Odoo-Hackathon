@@ -6,11 +6,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { EyeIcon, EyeOffIcon, LoaderIcon } from 'lucide-react'
+import { AuthPanel } from '@/components/shared/AuthPanel'
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -43,74 +40,108 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="shadow-lg border-slate-200">
-      <CardHeader className="space-y-1 pb-4">
-        <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
-        <CardDescription className="text-center">Sign in to your account to continue</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              {...register('email')}
-              className={errors.email ? 'border-red-400' : ''}
-            />
-            {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-xs text-indigo-600 hover:underline">
-                Forgot password?
-              </Link>
-            </div>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                {...register('password')}
-                className={errors.password ? 'border-red-400 pr-10' : 'pr-10'}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-              </button>
-            </div>
-            {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-          </div>
-
-          <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : 'Sign In'}
-          </Button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-slate-500">
+    <AuthPanel
+      eyebrow="Sign in"
+      title="Welcome back"
+      description="Sign in to your account to continue."
+      footer={
+        <p className="text-center text-sm" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}>
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-indigo-600 font-medium hover:underline">
+          <Link href="/signup" className="font-semibold" style={{ color: '#17457d' }}>
             Sign up
           </Link>
         </p>
-      </CardContent>
-    </Card>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {error && (
+          <div
+            className="p-3 rounded-xl text-sm"
+            style={{ background: 'rgba(220,38,38,0.08)', color: '#dc2626', fontFamily: 'Inter, sans-serif' }}
+          >
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <label
+            htmlFor="email"
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            {...register('email')}
+            className="input-soft w-full"
+            style={errors.email ? { outlineColor: '#dc2626' } : {}}
+          />
+          {errors.email && (
+            <p className="text-xs" style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}>
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="password"
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+            >
+              Password
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-xs font-medium"
+              style={{ color: '#274e82', fontFamily: 'Inter, sans-serif' }}
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••"
+              {...register('password')}
+              className="input-soft w-full pr-10"
+              style={errors.password ? { outlineColor: '#dc2626' } : {}}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2"
+              style={{ color: 'var(--on-surface-muted)' }}
+            >
+              {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-xs" style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}>
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="btn-gradient w-full flex items-center justify-center gap-2"
+          style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
+        >
+          {isLoading ? (
+            <>
+              <LoaderIcon className="h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : 'Sign In'}
+        </button>
+      </form>
+    </AuthPanel>
   )
 }

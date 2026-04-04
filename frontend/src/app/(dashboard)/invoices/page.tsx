@@ -15,7 +15,11 @@ const columns: ColumnDef<Invoice, unknown>[] = [
     accessorKey: 'invoice_number',
     header: 'Invoice #',
     cell: ({ row }) => (
-      <Link href={`/invoices/${row.original.id}`} className="font-medium text-indigo-600 hover:underline">
+      <Link
+        href={`/invoices/${row.original.id}`}
+        className="font-semibold hover:opacity-70 transition-opacity"
+        style={{ fontFamily: 'Inter, sans-serif', color: '#274e82' }}
+      >
         {row.original.invoice_number}
       </Link>
     ),
@@ -38,7 +42,11 @@ const columns: ColumnDef<Invoice, unknown>[] = [
   {
     accessorKey: 'grand_total',
     header: 'Total',
-    cell: ({ row }) => `₹${row.original.grand_total.toLocaleString()}`,
+    cell: ({ row }) => (
+      <span style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 600 }}>
+        ₹{row.original.grand_total.toLocaleString()}
+      </span>
+    ),
   },
   {
     accessorKey: 'status',

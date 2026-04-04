@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useInvoices } from '@/hooks/useInvoices'
 import { usePayments } from '@/hooks/usePayments'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { PageHero } from '@/components/shared/PageHero'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { Invoice, InvoicePaymentStatus } from '@/types'
@@ -87,19 +88,20 @@ export default function PortalInvoiceDetailPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <Link href="/my-invoices" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800">
-        <ArrowLeftIcon className="h-4 w-4" />Back to invoices
-      </Link>
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">{invoice.invoice_number}</h1>
-          <p className="text-sm text-slate-500 mt-1">Invoice details</p>
-        </div>
+      <PageHero
+        eyebrow="Invoice details"
+        title={invoice.invoice_number}
+        description="Review charges, payment status, and any outstanding balance."
+        action={
+          <Link href="/my-invoices" className="inline-flex items-center gap-2 text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: '#17457d', fontFamily: 'Inter, sans-serif' }}>
+            <ArrowLeftIcon className="h-4 w-4" />Back to invoices
+          </Link>
+        }
+      >
         <StatusBadge status={invoice.status} type="invoice" />
-      </div>
+      </PageHero>
 
-      <Card className="border-slate-200">
+      <Card className="section-card border-0">
         <CardHeader><CardTitle className="text-base">Invoice Details</CardTitle></CardHeader>
         <CardContent>
           <dl className="grid grid-cols-2 gap-4 text-sm mb-4">
@@ -149,7 +151,7 @@ export default function PortalInvoiceDetailPage() {
       </Card>
 
       {payStatus && (
-        <Card className="border-slate-200">
+        <Card className="section-card border-0">
           <CardHeader><CardTitle className="text-base">Payment Status</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div className="flex justify-between">

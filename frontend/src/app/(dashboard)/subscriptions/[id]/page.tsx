@@ -7,14 +7,17 @@ import api from '@/lib/api'
 import { useSubscriptions } from '@/hooks/useSubscriptions'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Subscription, SubscriptionStatus } from '@/types'
 import { ArrowLeftIcon, LoaderIcon, FileTextIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 const STATUSES: SubscriptionStatus[] = ['draft', 'quotation', 'confirmed', 'active', 'closed']
+
+const infoLabel = (text: string) => (
+  <dt className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}>
+    {text}
+  </dt>
+)
 
 export default function SubscriptionDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -63,7 +66,7 @@ export default function SubscriptionDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <LoaderIcon className="h-8 w-8 animate-spin text-indigo-600" />
+        <LoaderIcon className="h-8 w-8 animate-spin" style={{ color: '#274e82' }} />
       </div>
     )
   }
@@ -78,126 +81,181 @@ export default function SubscriptionDetailPage() {
         action={
           <div className="flex items-center gap-2">
             <Link href="/subscriptions">
-              <Button variant="outline" size="sm" className="gap-2">
+              <button className="btn-soft flex items-center gap-2">
                 <ArrowLeftIcon className="h-4 w-4" />Back
-              </Button>
+              </button>
             </Link>
-            <Button
-              size="sm"
-              variant="outline"
+            <button
               onClick={handleGenerateInvoice}
               disabled={actionLoading}
-              className="gap-2"
+              className="btn-soft flex items-center gap-2"
+              style={{ opacity: actionLoading ? 0.7 : 1 }}
             >
               <FileTextIcon className="h-4 w-4" />Generate Invoice
-            </Button>
+            </button>
           </div>
         }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          <Card className="border-slate-200">
-            <CardHeader><CardTitle className="text-base">Overview</CardTitle></CardHeader>
-            <CardContent>
-              <dl className="grid grid-cols-2 gap-4">
-                <div>
-                  <dt className="text-xs text-slate-500 mb-1">Customer</dt>
-                  <dd className="text-sm font-medium text-slate-900">{(subscription as Record<string, string>).customer_name ?? subscription.customer?.name ?? subscription.customer_id}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500 mb-1">Status</dt>
-                  <dd><StatusBadge status={subscription.status} type="subscription" /></dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500 mb-1">Start Date</dt>
-                  <dd className="text-sm text-slate-700">{new Date(subscription.start_date).toLocaleDateString()}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500 mb-1">Expiration</dt>
-                  <dd className="text-sm text-slate-700">{subscription.expiration_date ? new Date(subscription.expiration_date).toLocaleDateString() : '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500 mb-1">Plan</dt>
-                  <dd className="text-sm text-slate-700">{(subscription as Record<string, string>).plan_name ?? subscription.plan?.name ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500 mb-1">Payment Terms</dt>
-                  <dd className="text-sm text-slate-700">{subscription.payment_terms ?? '—'}</dd>
-                </div>
-              </dl>
-              {subscription.notes && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <dt className="text-xs text-slate-500 mb-1">Notes</dt>
-                  <dd className="text-sm text-slate-700">{subscription.notes}</dd>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Overview */}
+          <div className="section-card">
+            <h2
+              className="text-sm font-bold mb-5"
+              style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)', letterSpacing: '-0.01em' }}
+            >
+              Overview
+            </h2>
+            <dl className="grid grid-cols-2 gap-4">
+              <div>
+                {infoLabel('Customer')}
+                <dd className="text-sm font-semibold" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface)' }}>
+                  {(subscription as Record<string, string>).customer_name ?? subscription.customer?.name ?? subscription.customer_id}
+                </dd>
+              </div>
+              <div>
+                {infoLabel('Status')}
+                <dd><StatusBadge status={subscription.status} type="subscription" /></dd>
+              </div>
+              <div>
+                {infoLabel('Start Date')}
+                <dd className="text-sm" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-variant)' }}>
+                  {new Date(subscription.start_date).toLocaleDateString()}
+                </dd>
+              </div>
+              <div>
+                {infoLabel('Expiration')}
+                <dd className="text-sm" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-variant)' }}>
+                  {subscription.expiration_date ? new Date(subscription.expiration_date).toLocaleDateString() : '—'}
+                </dd>
+              </div>
+              <div>
+                {infoLabel('Plan')}
+                <dd className="text-sm" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-variant)' }}>
+                  {(subscription as Record<string, string>).plan_name ?? subscription.plan?.name ?? '—'}
+                </dd>
+              </div>
+              <div>
+                {infoLabel('Payment Terms')}
+                <dd className="text-sm" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-variant)' }}>
+                  {subscription.payment_terms ?? '—'}
+                </dd>
+              </div>
+            </dl>
+            {subscription.notes && (
+              <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--surface-container-high)' }}>
+                {infoLabel('Notes')}
+                <dd className="text-sm" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-variant)' }}>
+                  {subscription.notes}
+                </dd>
+              </div>
+            )}
+          </div>
 
+          {/* Lines */}
           {subscription.lines && subscription.lines.length > 0 && (
-            <Card className="border-slate-200">
-              <CardHeader><CardTitle className="text-base">Subscription Lines</CardTitle></CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left text-xs font-semibold text-slate-500 uppercase py-2">Product</th>
-                        <th className="text-right text-xs font-semibold text-slate-500 uppercase py-2">Qty</th>
-                        <th className="text-right text-xs font-semibold text-slate-500 uppercase py-2">Unit Price</th>
-                        <th className="text-right text-xs font-semibold text-slate-500 uppercase py-2">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {subscription.lines.map(line => (
-                        <tr key={line.id} className="border-b border-slate-100">
-                          <td className="py-2">{(line as Record<string, string>).product_name ?? line.product?.name ?? line.product_id}</td>
-                          <td className="py-2 text-right">{line.quantity}</td>
-                          <td className="py-2 text-right">₹{line.unit_price.toLocaleString()}</td>
-                          <td className="py-2 text-right font-medium">₹{line.total_amount.toLocaleString()}</td>
-                        </tr>
+            <div className="section-card">
+              <h2
+                className="text-sm font-bold mb-5"
+                style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)', letterSpacing: '-0.01em' }}
+              >
+                Subscription Lines
+              </h2>
+              <div className="rounded-xl overflow-hidden" style={{ background: 'var(--surface-container-low)' }}>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ background: 'var(--surface-container-high)' }}>
+                      {['Product', 'Qty', 'Unit Price', 'Total'].map((h, i) => (
+                        <th
+                          key={h}
+                          className={`px-4 py-3 ${i > 0 ? 'text-right' : 'text-left'}`}
+                          style={{
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: 'var(--on-surface-muted)',
+                          }}
+                        >
+                          {h}
+                        </th>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscription.lines.map((line, i) => (
+                      <tr
+                        key={line.id}
+                        style={{ background: i % 2 === 0 ? 'var(--surface-container-lowest)' : 'var(--surface-container-low)' }}
+                      >
+                        <td className="px-4 py-3" style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface)' }}>
+                          {(line as Record<string, string>).product_name ?? line.product?.name ?? line.product_id}
+                        </td>
+                        <td className="px-4 py-3 text-right" style={{ color: 'var(--on-surface-variant)' }}>{line.quantity}</td>
+                        <td className="px-4 py-3 text-right" style={{ color: 'var(--on-surface-variant)' }}>₹{line.unit_price.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right font-semibold" style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)' }}>
+                          ₹{line.total_amount.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
 
         <div className="space-y-4">
-          <Card className="border-slate-200">
-            <CardHeader><CardTitle className="text-base">Update Status</CardTitle></CardHeader>
-            <CardContent>
-              <Select onValueChange={handleStatusChange} defaultValue={subscription.status} disabled={actionLoading}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map(s => (
-                    <SelectItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+          {/* Update Status */}
+          <div className="section-card">
+            <h2
+              className="text-sm font-bold mb-4"
+              style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)', letterSpacing: '-0.01em' }}
+            >
+              Update Status
+            </h2>
+            <select
+              className="input-soft w-full"
+              defaultValue={subscription.status}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              disabled={actionLoading}
+            >
+              {STATUSES.map(s => (
+                <option key={s} value={s}>
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <Card className="border-slate-200">
-            <CardHeader><CardTitle className="text-base">Metadata</CardTitle></CardHeader>
-            <CardContent className="space-y-2 text-sm">
+          {/* Metadata */}
+          <div className="section-card">
+            <h2
+              className="text-sm font-bold mb-4"
+              style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)', letterSpacing: '-0.01em' }}
+            >
+              Metadata
+            </h2>
+            <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-500">ID</span>
-                <span className="font-mono text-xs text-slate-700">{subscription.id}</span>
+                <span style={{ color: 'var(--on-surface-muted)', fontFamily: 'Inter, sans-serif' }}>ID</span>
+                <span
+                  className="font-mono text-xs"
+                  style={{ color: 'var(--on-surface-variant)' }}
+                >
+                  {subscription.id.slice(0, 8)}...
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Created</span>
-                <span className="text-slate-700">{new Date(subscription.created_at).toLocaleDateString()}</span>
+                <span style={{ color: 'var(--on-surface-muted)', fontFamily: 'Inter, sans-serif' }}>Created</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-variant)' }}>
+                  {new Date(subscription.created_at).toLocaleDateString()}
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

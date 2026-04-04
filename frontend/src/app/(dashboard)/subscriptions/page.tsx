@@ -7,7 +7,6 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { PaginationControls } from '@/components/shared/PaginationControls'
-import { Button } from '@/components/ui/button'
 import { PlusIcon } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { Subscription } from '@/types'
@@ -17,7 +16,11 @@ const columns: ColumnDef<Subscription, unknown>[] = [
     accessorKey: 'subscription_number',
     header: 'Number',
     cell: ({ row }) => (
-      <Link href={`/subscriptions/${row.original.id}`} className="font-medium text-indigo-600 hover:underline">
+      <Link
+        href={`/subscriptions/${row.original.id}`}
+        className="font-semibold hover:opacity-70 transition-opacity"
+        style={{ fontFamily: 'Inter, sans-serif', color: '#274e82' }}
+      >
         {row.original.subscription_number}
       </Link>
     ),
@@ -58,10 +61,10 @@ export default function SubscriptionsPage() {
         description="Manage all customer subscriptions"
         action={
           <Link href="/subscriptions/new">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+            <button className="btn-gradient flex items-center gap-2">
               <PlusIcon className="h-4 w-4" />
               New Subscription
-            </Button>
+            </button>
           </Link>
         }
       />

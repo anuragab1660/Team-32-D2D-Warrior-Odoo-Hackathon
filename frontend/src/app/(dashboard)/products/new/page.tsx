@@ -9,11 +9,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useProducts } from '@/hooks/useProducts'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeftIcon, LoaderIcon, ImageIcon, XIcon } from 'lucide-react'
 import api from '@/lib/api'
 import { toast } from 'sonner'
@@ -27,6 +22,15 @@ const schema = z.object({
 })
 
 type FormData = z.infer<typeof schema>
+
+const fieldLabel = (text: string) => (
+  <span
+    className="text-xs font-semibold uppercase tracking-wider"
+    style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+  >
+    {text}
+  </span>
+)
 
 export default function NewProductPage() {
   const router = useRouter()
@@ -81,102 +85,159 @@ export default function NewProductPage() {
         description="Add a new product to your catalog"
         action={
           <Link href="/products">
-            <Button variant="outline" size="sm" className="gap-2">
+            <button className="btn-soft flex items-center gap-2">
               <ArrowLeftIcon className="h-4 w-4" />Back
-            </Button>
+            </button>
           </Link>
         }
       />
 
-      <Card className="border-slate-200">
-        <CardHeader><CardTitle className="text-base">Product Details</CardTitle></CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{error}</div>
-            )}
+      <div className="section-card">
+        <h2
+          className="text-sm font-bold mb-5"
+          style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)', letterSpacing: '-0.01em' }}
+        >
+          Product Details
+        </h2>
 
-            {/* Image Upload */}
-            <div className="space-y-2">
-              <Label>Product Image</Label>
-              <div className="flex items-center gap-4">
-                <div
-                  className="h-24 w-24 rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50 overflow-hidden cursor-pointer hover:border-indigo-400 transition-colors"
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {error && (
+            <div
+              className="p-3 rounded-xl text-sm"
+              style={{ background: 'rgba(220,38,38,0.08)', color: '#dc2626', fontFamily: 'Inter, sans-serif' }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Image Upload */}
+          <div className="space-y-2">
+            {fieldLabel('Product Image')}
+            <div className="flex items-center gap-4 mt-1.5">
+              <div
+                className="h-24 w-24 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer transition-opacity hover:opacity-80"
+                style={{ background: 'var(--surface-container-low)' }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {imageUploading ? (
+                  <LoaderIcon className="h-6 w-6 animate-spin" style={{ color: '#274e82' }} />
+                ) : imageUrl ? (
+                  <Image src={imageUrl} alt="Product" width={96} height={96} className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="h-8 w-8" style={{ color: 'var(--on-surface-muted)' }} />
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  className="btn-soft text-sm"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={imageUploading}
                 >
-                  {imageUploading ? (
-                    <LoaderIcon className="h-6 w-6 animate-spin text-indigo-500" />
-                  ) : imageUrl ? (
-                    <Image src={imageUrl} alt="Product" width={96} height={96} className="h-full w-full object-cover" />
-                  ) : (
-                    <ImageIcon className="h-8 w-8 text-slate-300" />
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={imageUploading}>
-                    {imageUploading ? 'Uploading...' : 'Choose Image'}
-                  </Button>
-                  {imageUrl && (
-                    <Button type="button" variant="ghost" size="sm" className="gap-1 text-red-500 hover:text-red-700 h-7" onClick={() => { setImageUrl(''); if (fileInputRef.current) fileInputRef.current.value = '' }}>
-                      <XIcon className="h-3.5 w-3.5" />Remove
-                    </Button>
-                  )}
-                  <p className="text-xs text-slate-400">PNG, JPG up to 5MB</p>
-                </div>
-              </div>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name</Label>
-              <Input id="name" placeholder="e.g. Premium Subscription" {...register('name')} className={errors.name ? 'border-red-400' : ''} />
-              {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Product Type</Label>
-              <Select defaultValue="service" onValueChange={(v) => setValue('product_type', v as FormData['product_type'])}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="service">Service</SelectItem>
-                  <SelectItem value="physical">Physical</SelectItem>
-                  <SelectItem value="digital">Digital</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input id="description" placeholder="Optional description" {...register('description')} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="sales_price">Sales Price (₹)</Label>
-                <Input id="sales_price" type="number" step="0.01" {...register('sales_price')} className={errors.sales_price ? 'border-red-400' : ''} />
-                {errors.sales_price && <p className="text-xs text-red-500">{errors.sales_price.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cost_price">Cost Price (₹)</Label>
-                <Input id="cost_price" type="number" step="0.01" {...register('cost_price')} className={errors.cost_price ? 'border-red-400' : ''} />
-                {errors.cost_price && <p className="text-xs text-red-500">{errors.cost_price.message}</p>}
+                  {imageUploading ? 'Uploading...' : 'Choose Image'}
+                </button>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-sm font-medium"
+                    style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}
+                    onClick={() => { setImageUrl(''); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                  >
+                    <XIcon className="h-3.5 w-3.5" />Remove
+                  </button>
+                )}
+                <p className="text-xs" style={{ color: 'var(--on-surface-muted)', fontFamily: 'Inter, sans-serif' }}>
+                  PNG, JPG up to 5MB
+                </p>
               </div>
             </div>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+          </div>
 
-            <div className="flex gap-3 pt-2">
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700" disabled={isLoading || imageUploading}>
-                {isLoading ? <><LoaderIcon className="mr-2 h-4 w-4 animate-spin" />Creating...</> : 'Create Product'}
-              </Button>
-              <Link href="/products">
-                <Button type="button" variant="outline">Cancel</Button>
-              </Link>
+          <div className="space-y-1.5">
+            {fieldLabel('Product Name')}
+            <input
+              id="name"
+              placeholder="e.g. Premium Subscription"
+              {...register('name')}
+              className="input-soft w-full"
+              style={errors.name ? { outlineColor: '#dc2626' } : {}}
+            />
+            {errors.name && (
+              <p className="text-xs" style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}>{errors.name.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            {fieldLabel('Product Type')}
+            <select
+              className="input-soft w-full"
+              defaultValue="service"
+              onChange={(e) => setValue('product_type', e.target.value as FormData['product_type'])}
+            >
+              <option value="service">Service</option>
+              <option value="physical">Physical</option>
+              <option value="digital">Digital</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            {fieldLabel('Description')}
+            <input
+              id="description"
+              placeholder="Optional description"
+              {...register('description')}
+              className="input-soft w-full"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              {fieldLabel('Sales Price (₹)')}
+              <input
+                id="sales_price"
+                type="number"
+                step="0.01"
+                {...register('sales_price')}
+                className="input-soft w-full"
+                style={errors.sales_price ? { outlineColor: '#dc2626' } : {}}
+              />
+              {errors.sales_price && (
+                <p className="text-xs" style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}>{errors.sales_price.message}</p>
+              )}
             </div>
-          </form>
-        </CardContent>
-      </Card>
+            <div className="space-y-1.5">
+              {fieldLabel('Cost Price (₹)')}
+              <input
+                id="cost_price"
+                type="number"
+                step="0.01"
+                {...register('cost_price')}
+                className="input-soft w-full"
+                style={errors.cost_price ? { outlineColor: '#dc2626' } : {}}
+              />
+              {errors.cost_price && (
+                <p className="text-xs" style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}>{errors.cost_price.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={isLoading || imageUploading}
+              className="btn-gradient flex items-center gap-2"
+              style={{ opacity: (isLoading || imageUploading) ? 0.7 : 1 }}
+            >
+              {isLoading ? <><LoaderIcon className="h-4 w-4 animate-spin" />Creating...</> : 'Create Product'}
+            </button>
+            <Link href="/products">
+              <button type="button" className="btn-soft">Cancel</button>
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

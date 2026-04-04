@@ -6,14 +6,19 @@ import Link from 'next/link'
 import api from '@/lib/api'
 import { useCartStore } from '@/stores/cart'
 import { usePlans } from '@/hooks/usePlans'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import type { Product, ProductVariant, RecurringPlan } from '@/types'
+import type { Product, ProductVariant } from '@/types'
 import { ArrowLeftIcon, LoaderIcon, ShoppingCartIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHero } from '@/components/shared/PageHero'
+
+const fieldLabel = (text: string) => (
+  <span
+    className="text-xs font-semibold uppercase tracking-wider"
+    style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+  >
+    {text}
+  </span>
+)
 
 export default function ProductDetailPortalPage() {
   const { productId } = useParams<{ productId: string }>()
@@ -50,7 +55,6 @@ export default function ProductDetailPortalPage() {
   const handleAddToCart = () => {
     if (!product) return
     const variant = variants.find(v => v.id === selectedVariant)
-    const plan = plans.find(p => p.id === selectedPlan)
     const basePrice = product.sales_price + (variant?.extra_price ?? 0)
 
     addItem({
@@ -68,7 +72,7 @@ export default function ProductDetailPortalPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <LoaderIcon className="h-8 w-8 animate-spin text-indigo-600" />
+        <LoaderIcon className="h-8 w-8 animate-spin" style={{ color: '#274e82' }} />
       </div>
     )
   }
@@ -79,79 +83,89 @@ export default function ProductDetailPortalPage() {
   const totalPrice = (product.sales_price + (selectedVariantObj?.extra_price ?? 0)) * quantity
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <Link href="/shop" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800">
-        <ArrowLeftIcon className="h-4 w-4" />Back to shop
-      </Link>
+    <div className="max-w-3xl space-y-6 mx-auto">
+      <PageHero
+        eyebrow="Product details"
+        title={product.name}
+        description="Choose a variant, plan, and quantity before adding the item to your cart."
+        action={
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 text-sm font-medium hover:opacity-70 transition-opacity"
+            style={{ color: '#17457d', fontFamily: 'Inter, sans-serif' }}
+          >
+            <ArrowLeftIcon className="h-4 w-4" />Back to shop
+          </Link>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Product info */}
         <div>
-          <Badge variant="outline" className="capitalize mb-3">{product.product_type}</Badge>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">{product.name}</h1>
+          <span
+            className="inline-block text-xs font-semibold px-2.5 py-1 rounded-lg capitalize mb-3"
+            style={{
+              background: 'var(--surface-container-low)',
+              color: 'var(--on-surface-variant)',
+              fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            {product.product_type}
+          </span>
+          <h1
+            className="text-2xl font-bold mb-2"
+            style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)', letterSpacing: '-0.02em' }}
+          >
+            {product.name}
+          </h1>
           {product.description && (
-            <p className="text-slate-500 text-sm mb-4">{product.description}</p>
+            <p
+              className="text-sm mb-4"
+              style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+            >
+              {product.description}
+            </p>
           )}
-          <p className="text-3xl font-bold text-indigo-700">₹{product.sales_price.toLocaleString()}</p>
+          <p
+            className="text-3xl font-bold"
+            style={{ fontFamily: 'Manrope, sans-serif', color: '#063669', letterSpacing: '-0.03em' }}
+          >
+            ₹{product.sales_price.toLocaleString()}
+          </p>
           {selectedVariantObj && (
-            <p className="text-sm text-slate-500 mt-1">+₹{selectedVariantObj.extra_price} for this variant</p>
+            <p
+              className="text-sm mt-1"
+              style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+            >
+              +₹{selectedVariantObj.extra_price} for this variant
+            </p>
           )}
         </div>
 
-        <Card className="border-slate-200">
-          <CardContent className="p-5 space-y-4">
-            {variants.length > 0 && (
-              <div className="space-y-2">
-                <Label>Select Variant</Label>
-                <Select value={selectedVariant || '__none__'} onValueChange={v => setSelectedVariant(v === '__none__' ? '' : v)}>
-                  <SelectTrigger><SelectValue placeholder="Choose variant" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">No variant</SelectItem>
-                    {variants.map(v => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.attribute}: {v.value} {v.extra_price > 0 ? `(+₹${v.extra_price})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+        {/* Add to cart panel */}
+        <div className="section-card p-5 space-y-4">
+          {variants.length > 0 && (
+            <div className="space-y-1.5">
+              {fieldLabel('Select Variant')}
+              <select
+                className="input-soft w-full"
+                value={selectedVariant}
+                onChange={(e) => setSelectedVariant(e.target.value)}
+              >
+                <option value="">No variant</option>
+                {variants.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.attribute}: {v.value} {v.extra_price > 0 ? `(+₹${v.extra_price})` : ''}
+                  </option>
+                ))}
+              </select>
+>>>>>>> Stashed changes
+            </div>
+          )}
 
-            {plans.length > 0 && (
-              <div className="space-y-2">
-                <Label>Billing Plan (optional)</Label>
-                <Select value={selectedPlan || '__none__'} onValueChange={v => setSelectedPlan(v === '__none__' ? '' : v)}>
-                  <SelectTrigger><SelectValue placeholder="One-time purchase" /></SelectTrigger>
-                  <SelectContent>
+              </div>
+            </div>
+          </div>
+        )
+      }
                     <SelectItem value="__none__">One-time purchase</SelectItem>
-                    {plans.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name} — ₹{p.price}/{p.billing_period}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Quantity</Label>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={() => setQuantity(q => Math.max(1, q - 1))} className="h-8 w-8 p-0">-</Button>
-                <span className="text-sm font-medium w-8 text-center">{quantity}</span>
-                <Button variant="outline" size="sm" onClick={() => setQuantity(q => q + 1)} className="h-8 w-8 p-0">+</Button>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-100">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm text-slate-500">Total</span>
-                <span className="text-lg font-bold text-slate-900">₹{totalPrice.toLocaleString()}</span>
-              </div>
-              <Button onClick={handleAddToCart} className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2">
-                <ShoppingCartIcon className="h-4 w-4" />Add to Cart
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-}

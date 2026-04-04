@@ -8,11 +8,6 @@ import { z } from 'zod'
 import { useSubscriptions } from '@/hooks/useSubscriptions'
 import { usePlans } from '@/hooks/usePlans'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { LoaderIcon, ArrowLeftIcon } from 'lucide-react'
 import Link from 'next/link'
 import api from '@/lib/api'
@@ -28,6 +23,15 @@ const schema = z.object({
 })
 
 type FormData = z.infer<typeof schema>
+
+const fieldLabel = (text: string) => (
+  <span
+    className="text-xs font-semibold uppercase tracking-wider"
+    style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+  >
+    {text}
+  </span>
+)
 
 export default function NewSubscriptionPage() {
   const router = useRouter()
@@ -75,84 +79,107 @@ export default function NewSubscriptionPage() {
         description="Create a new customer subscription"
         action={
           <Link href="/subscriptions">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ArrowLeftIcon className="h-4 w-4" />
-              Back
-            </Button>
+            <button className="btn-soft flex items-center gap-2">
+              <ArrowLeftIcon className="h-4 w-4" />Back
+            </button>
           </Link>
         }
       />
 
-      <Card className="border-slate-200">
-        <CardHeader><CardTitle className="text-base">Subscription Details</CardTitle></CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{error}</div>
+      <div className="section-card">
+        <h2
+          className="text-sm font-bold mb-5"
+          style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--on-surface)', letterSpacing: '-0.01em' }}
+        >
+          Subscription Details
+        </h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {error && (
+            <div
+              className="p-3 rounded-xl text-sm"
+              style={{ background: 'rgba(220,38,38,0.08)', color: '#dc2626', fontFamily: 'Inter, sans-serif' }}
+            >
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            {fieldLabel('Customer')}
+            <select
+              className="input-soft w-full"
+              style={errors.customer_id ? { outlineColor: '#dc2626' } : {}}
+              defaultValue=""
+              onChange={(e) => setValue('customer_id', e.target.value)}
+            >
+              <option value="" disabled>Select customer</option>
+              {customers.map(c => (
+                <option key={c.id} value={c.id}>{c.name || c.email || c.id}</option>
+              ))}
+            </select>
+            {errors.customer_id && (
+              <p className="text-xs" style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}>{errors.customer_id.message}</p>
             )}
+          </div>
 
-            <div className="space-y-2">
-              <Label>Customer</Label>
-              <Select onValueChange={(v) => setValue('customer_id', v)}>
-                <SelectTrigger className={errors.customer_id ? 'border-red-400' : ''}>
-                  <SelectValue placeholder="Select customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name || c.email || c.id}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.customer_id && <p className="text-xs text-red-500">{errors.customer_id.message}</p>}
-            </div>
+          <div className="space-y-1.5">
+            {fieldLabel('Recurring Plan (optional)')}
+            <select
+              className="input-soft w-full"
+              defaultValue=""
+              onChange={(e) => setValue('plan_id', e.target.value)}
+            >
+              <option value="">No plan selected</option>
+              {plans.map(p => (
+                <option key={p.id} value={p.id}>{p.name} — ₹{p.price}/{p.billing_period}</option>
+              ))}
+            </select>
+          </div>
 
-            <div className="space-y-2">
-              <Label>Recurring Plan (optional)</Label>
-              <Select onValueChange={(v) => setValue('plan_id', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {plans.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name} — ₹{p.price}/{p.billing_period}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              {fieldLabel('Start Date')}
+              <input
+                id="start_date"
+                type="date"
+                {...register('start_date')}
+                className="input-soft w-full"
+                style={errors.start_date ? { outlineColor: '#dc2626' } : {}}
+              />
+              {errors.start_date && (
+                <p className="text-xs" style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}>{errors.start_date.message}</p>
+              )}
             </div>
+            <div className="space-y-1.5">
+              {fieldLabel('Expiration Date')}
+              <input id="expiration_date" type="date" {...register('expiration_date')} className="input-soft w-full" />
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start_date">Start Date</Label>
-                <Input id="start_date" type="date" {...register('start_date')} className={errors.start_date ? 'border-red-400' : ''} />
-                {errors.start_date && <p className="text-xs text-red-500">{errors.start_date.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expiration_date">Expiration Date</Label>
-                <Input id="expiration_date" type="date" {...register('expiration_date')} />
-              </div>
-            </div>
+          <div className="space-y-1.5">
+            {fieldLabel('Payment Terms')}
+            <input id="payment_terms" placeholder="e.g. Net 30" {...register('payment_terms')} className="input-soft w-full" />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="payment_terms">Payment Terms</Label>
-              <Input id="payment_terms" placeholder="e.g. Net 30" {...register('payment_terms')} />
-            </div>
+          <div className="space-y-1.5">
+            {fieldLabel('Notes')}
+            <input id="notes" placeholder="Optional notes" {...register('notes')} className="input-soft w-full" />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Input id="notes" placeholder="Optional notes" {...register('notes')} />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
-                {isLoading ? <><LoaderIcon className="mr-2 h-4 w-4 animate-spin" />Creating...</> : 'Create Subscription'}
-              </Button>
-              <Link href="/subscriptions">
-                <Button type="button" variant="outline">Cancel</Button>
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          <div className="flex gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-gradient flex items-center gap-2"
+              style={{ opacity: isLoading ? 0.7 : 1 }}
+            >
+              {isLoading ? <><LoaderIcon className="h-4 w-4 animate-spin" />Creating...</> : 'Create Subscription'}
+            </button>
+            <Link href="/subscriptions">
+              <button type="button" className="btn-soft">Cancel</button>
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

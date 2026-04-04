@@ -6,11 +6,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import api from '@/lib/api'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoaderIcon, ArrowLeftIcon, CheckCircleIcon } from 'lucide-react'
+import { AuthPanel } from '@/components/shared/AuthPanel'
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -43,69 +40,97 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <Card className="shadow-lg border-slate-200">
-        <CardContent className="pt-8 pb-8 text-center">
-          <div className="flex justify-center mb-4">
-            <CheckCircleIcon className="h-12 w-12 text-green-500" />
-          </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Check your email</h2>
-          <p className="text-sm text-slate-500 mb-6">
-            We&apos;ve sent a password reset link to your email address.
-          </p>
-          <Link href="/login" className="text-indigo-600 text-sm font-medium hover:underline inline-flex items-center gap-1">
-            <ArrowLeftIcon className="h-3 w-3" />
+      <AuthPanel
+        eyebrow="Recovery email sent"
+        title="Check your email"
+        description="We&apos;ve sent a password reset link to your email address."
+        footer={
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold"
+            style={{ color: '#17457d', fontFamily: 'Inter, sans-serif' }}
+          >
+            <ArrowLeftIcon className="h-3.5 w-3.5" />
             Back to login
           </Link>
-        </CardContent>
-      </Card>
+        }
+        className="text-center"
+      >
+        <div
+          className="h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
+          style={{ background: 'rgba(16,185,129,0.12)' }}
+        >
+          <CheckCircleIcon className="h-8 w-8" style={{ color: '#10b981' }} />
+        </div>
+      </AuthPanel>
     )
   }
 
   return (
-    <Card className="shadow-lg border-slate-200">
-      <CardHeader className="space-y-1 pb-4">
-        <CardTitle className="text-2xl font-bold text-center">Forgot password?</CardTitle>
-        <CardDescription className="text-center">
-          Enter your email and we&apos;ll send you a reset link
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              {...register('email')}
-              className={errors.email ? 'border-red-400' : ''}
-            />
-            {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-          </div>
-
-          <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : 'Send Reset Link'}
-          </Button>
-        </form>
-
-        <p className="mt-6 text-center">
-          <Link href="/login" className="text-sm text-indigo-600 font-medium hover:underline inline-flex items-center gap-1">
-            <ArrowLeftIcon className="h-3 w-3" />
+    <AuthPanel
+      eyebrow="Account recovery"
+      title="Forgot password?"
+      description="Enter your email and we&apos;ll send you a reset link."
+      footer={
+        <p className="text-center">
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold"
+            style={{ color: '#17457d', fontFamily: 'Inter, sans-serif' }}
+          >
+            <ArrowLeftIcon className="h-3.5 w-3.5" />
             Back to login
           </Link>
         </p>
-      </CardContent>
-    </Card>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {error && (
+          <div
+            className="p-3 rounded-xl text-sm"
+            style={{ background: 'rgba(220,38,38,0.08)', color: '#dc2626', fontFamily: 'Inter, sans-serif' }}
+          >
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <label
+            htmlFor="email"
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ fontFamily: 'Inter, sans-serif', color: 'var(--on-surface-muted)' }}
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            {...register('email')}
+            className="input-soft w-full"
+            style={errors.email ? { outlineColor: '#dc2626' } : {}}
+          />
+          {errors.email && (
+            <p className="text-xs" style={{ color: '#dc2626', fontFamily: 'Inter, sans-serif' }}>
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="btn-gradient w-full flex items-center justify-center gap-2"
+          style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
+        >
+          {isLoading ? (
+            <>
+              <LoaderIcon className="h-4 w-4 animate-spin" />
+              Sending...
+            </>
+          ) : 'Send Reset Link'}
+        </button>
+      </form>
+    </AuthPanel>
   )
 }

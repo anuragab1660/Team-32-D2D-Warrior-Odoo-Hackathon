@@ -11,11 +11,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AuthGuard allowedRoles={['admin', 'internal']}>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen" style={{ background: 'radial-gradient(circle at top left, rgba(39,78,130,0.14), transparent 24%), radial-gradient(circle at bottom right, rgba(5,150,105,0.08), transparent 20%), linear-gradient(180deg, #f8faff 0%, #eef3fb 100%)' }}>
         <Sidebar />
         <TopNav onSearchOpen={() => setCmdOpen(true)} />
-        <main className="ml-60 pt-16 min-h-screen">
-          <div className="p-6 max-w-7xl mx-auto">
+        <main style={{ marginLeft: '256px', paddingTop: '72px', minHeight: '100vh' }}>
+          <div className="p-6 sm:p-8 max-w-screen-2xl mx-auto">
             {children}
           </div>
         </main>

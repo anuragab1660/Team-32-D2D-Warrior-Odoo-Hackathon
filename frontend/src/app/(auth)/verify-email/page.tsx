@@ -4,66 +4,106 @@ import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import api from '@/lib/api'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircleIcon, XCircleIcon, LoaderIcon, MailIcon } from 'lucide-react'
+import { AuthPanel } from '@/components/shared/AuthPanel'
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const token = searchParams.get('token')
-  const [status, setStatus] = useState<'pending' | 'verifying' | 'success' | 'error' | 'waiting'>('waiting')
-  const [error, setError] = useState('')
+      <AuthPanel eyebrow="Verification" title="Verifying your email..." description="Hang tight while we confirm your address.">
+        <div className="flex justify-center py-6">
+          <LoaderIcon className="h-12 w-12 animate-spin" style={{ color: '#17457d' }} />
+        </div>
+      </AuthPanel>
+    )
 
-  useEffect(() => {
-    if (!token) { setStatus('waiting'); return }
-    const verify = async () => {
-      setStatus('verifying')
-      try {
-        await api.get(`/api/auth/verify-email?token=${token}`)
-        setStatus('success')
-        setTimeout(() => router.push('/login'), 3000)
-      } catch (err: unknown) {
-        const e = err as { response?: { data?: { error?: string } } }
-        setError(e?.response?.data?.error || 'Verification failed')
-        setStatus('error')
-      }
-    }
-    verify()
-  }, [token, router])
+    if (status === 'success') return (
+      <AuthPanel
+        eyebrow="Verification complete"
+        title="Email verified!"
+        description="Your email has been verified. Redirecting to login..."
+        footer={
+          <Link href="/login">
+            <Button className="btn-gradient">Go to Login</Button>
+          </Link>
+        }
+        className="text-center"
+      >
+        <CheckCircleIcon className="h-12 w-12 mx-auto mb-4" style={{ color: '#10b981' }} />
+      </AuthPanel>
+    )
 
-  if (status === 'verifying') return (
-    <Card className="shadow-lg border-slate-200">
-      <CardContent className="pt-8 pb-8 text-center">
-        <LoaderIcon className="h-12 w-12 text-indigo-600 animate-spin mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-slate-900">Verifying your email...</h2>
-      </CardContent>
-    </Card>
-  )
+    if (status === 'error') return (
+      <AuthPanel
+        eyebrow="Verification failed"
+        title="Verification failed"
+        description={error}
+        footer={
+          <Link href="/login">
+            <Button variant="outline" className="btn-soft">Back to Login</Button>
+          </Link>
+        }
+        className="text-center"
+      >
+        <XCircleIcon className="h-12 w-12 mx-auto mb-4" style={{ color: '#dc2626' }} />
+      </AuthPanel>
+    )
 
-  if (status === 'success') return (
-    <Card className="shadow-lg border-slate-200">
-      <CardContent className="pt-8 pb-8 text-center">
-        <CheckCircleIcon className="h-12 w-12 text-green-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Email verified!</h2>
-        <p className="text-sm text-slate-500 mb-6">Your email has been verified. Redirecting to login...</p>
-        <Link href="/login"><Button className="bg-indigo-600 hover:bg-indigo-700">Go to Login</Button></Link>
-      </CardContent>
-    </Card>
-  )
+    return (
+      <AuthPanel
+        eyebrow="Email verification"
+        title="Check your inbox"
+        description="We sent a verification link to your email address. Click the link to verify your account."
+        footer={
+          <Link href="/login">
+            <Button variant="outline" className="btn-soft">Back to Login</Button>
+          </Link>
+        }
+        className="text-center"
+      >
+        <div className="flex justify-center mb-4">
+          <MailIcon className="h-12 w-12" style={{ color: '#17457d' }} />
+        </div>
+      </AuthPanel>
+    )
+  
+        eyebrow="Verification complete"
+        title="Email verified!"
+        description="Your email has been verified. Redirecting to login..."
+        footer={
+          <Link href="/login">
+            <Button className="btn-gradient">Go to Login</Button>
+          </Link>
+        }
+        className="text-center"
+      >
+        <CheckCircleIcon className="h-12 w-12 mx-auto mb-4" style={{ color: '#10b981' }} />
+      </AuthPanel>
+    )
+  }
 
-  if (status === 'error') return (
-    <Card className="shadow-lg border-slate-200">
-      <CardContent className="pt-8 pb-8 text-center">
-        <XCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Verification failed</h2>
-        <p className="text-sm text-slate-500 mb-6">{error}</p>
-        <Link href="/login"><Button variant="outline">Back to Login</Button></Link>
-      </CardContent>
-    </Card>
-  )
+  if (status === 'error') {
+    return (
+      <AuthPanel
+        eyebrow="Verification failed"
+        title="Verification failed"
+        description={error}
+        footer={
+          <Link href="/login">
+            <Button variant="outline" className="btn-soft">Back to Login</Button>
+          </Link>
+        }
+        className="text-center"
+      >
+        <XCircleIcon className="h-12 w-12 mx-auto mb-4" style={{ color: '#dc2626' }} />
+      </AuthPanel>
+    )
+  }
+>>>>>>> Stashed changes
 
   return (
+<<<<<<< Updated upstream
     <Card className="shadow-lg border-slate-200">
       <CardContent className="pt-8 pb-8 text-center">
         <div className="flex justify-center mb-4">
@@ -76,6 +116,23 @@ function VerifyEmailContent() {
         <Link href="/login"><Button variant="outline">Back to Login</Button></Link>
       </CardContent>
     </Card>
+=======
+    <AuthPanel
+      eyebrow="Email verification"
+      title="Check your inbox"
+      description="We sent a verification link to your email address. Click the link to verify your account."
+      footer={
+        <Link href="/login">
+          <Button variant="outline" className="btn-soft">Back to Login</Button>
+        </Link>
+      }
+      className="text-center"
+    >
+      <div className="flex justify-center mb-4">
+        <MailIcon className="h-12 w-12" style={{ color: '#17457d' }} />
+      </div>
+    </AuthPanel>
+>>>>>>> Stashed changes
   )
 }
 

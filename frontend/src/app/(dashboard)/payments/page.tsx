@@ -14,7 +14,12 @@ const columns: ColumnDef<Payment, unknown>[] = [
     accessorKey: 'id',
     header: 'Payment ID',
     cell: ({ row }) => (
-      <span className="font-mono text-xs text-slate-600">{row.original.id.slice(0, 8)}...</span>
+      <span
+        className="font-mono text-xs"
+        style={{ color: 'var(--on-surface-variant)' }}
+      >
+        {row.original.id.slice(0, 8)}...
+      </span>
     ),
   },
   {
@@ -30,7 +35,11 @@ const columns: ColumnDef<Payment, unknown>[] = [
   {
     accessorKey: 'amount',
     header: 'Amount',
-    cell: ({ row }) => `₹${row.original.amount.toLocaleString()}`,
+    cell: ({ row }) => (
+      <span style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 600 }}>
+        ₹{row.original.amount.toLocaleString()}
+      </span>
+    ),
   },
   {
     accessorKey: 'payment_method',

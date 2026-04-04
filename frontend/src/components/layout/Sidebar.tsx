@@ -6,9 +6,8 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/hooks/useAuth'
 import {
   LayoutDashboardIcon, UsersIcon, PackageIcon, FileTextIcon,
-  CreditCardIcon, BarChart3Icon, SettingsIcon, ChevronRightIcon,
-  ZapIcon, TagIcon, PercentIcon, ReceiptIcon, BookTemplateIcon,
-  RefreshCwIcon,
+  CreditCardIcon, BarChart3Icon, SettingsIcon, ChevronDownIcon,
+  ZapIcon,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -29,7 +28,9 @@ const navItems: NavItem[] = [
   { label: 'Reports', href: '/reports', icon: BarChart3Icon },
   { label: 'Users', href: '/users', icon: UsersIcon, roles: ['admin'] },
   {
-    label: 'Configuration', href: '/configuration', icon: SettingsIcon,
+    label: 'Configuration',
+    href: '/configuration',
+    icon: SettingsIcon,
     children: [
       { label: 'Recurring Plans', href: '/configuration/recurring-plans' },
       { label: 'Templates', href: '/configuration/quotation-templates' },
@@ -43,7 +44,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { user } = useAuthStore()
   const [expanded, setExpanded] = useState<string | null>(
-    pathname.startsWith('/dashboard/configuration') ? 'Configuration' : null
+    pathname.startsWith('/configuration') ? 'Configuration' : null
   )
 
   const filteredNav = navItems.filter(item =>
@@ -51,19 +52,27 @@ export function Sidebar() {
   )
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 w-60 bg-white border-r border-slate-200 flex flex-col">
+    <aside
+      className="fixed inset-y-0 left-0 z-40 w-64 flex flex-col border-r border-white/10 shadow-[0_24px_50px_-24px_rgba(6,54,105,0.55)]"
+      style={{ background: 'linear-gradient(180deg, #07192f 0%, #0b2344 42%, #0f305d 100%)' }}
+    >
+
       {/* Logo */}
-      <div className="flex items-center gap-2 px-5 h-16 border-b border-slate-200 shrink-0">
-        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+      <div className="flex items-center gap-3 px-6 h-16 shrink-0">
+        <div className="h-8 w-8 rounded-xl flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, #1f5a95, #4f8bd6)' }}>
           <ZapIcon className="h-4 w-4 text-white" />
         </div>
-        <span className="font-bold text-slate-900" style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}>
+        <span className="font-bold text-white text-[17px] tracking-tight" style={{ fontFamily: 'Manrope, sans-serif' }}>
           ProsubX
         </span>
       </div>
 
+      {/* Tonal divider */}
+      <div className="mx-4 h-px opacity-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)' }} />
+
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-0.5">
         {filteredNav.map(item => {
           const isActive = item.href === '/dashboard'
             ? pathname === '/dashboard'
@@ -71,31 +80,36 @@ export function Sidebar() {
           const isExpanded = expanded === item.label
 
           if (item.children) {
+            const hasActiveChild = item.children.some(c => pathname === c.href)
             return (
               <div key={item.label}>
                 <button
                   onClick={() => setExpanded(isExpanded ? null : item.label)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                    isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    'nav-item w-full',
+                    (isActive || hasActiveChild) && 'active'
                   )}
                 >
-                  <item.icon className="h-4 w-4 shrink-0" />
+                  <item.icon className="h-4 w-4 shrink-0 opacity-80" />
                   <span className="flex-1 text-left">{item.label}</span>
-                  <ChevronRightIcon className={cn('h-3.5 w-3.5 transition-transform', isExpanded && 'rotate-90')} />
+                  <ChevronDownIcon className={cn(
+                    'h-3.5 w-3.5 opacity-50 transition-transform duration-200',
+                    isExpanded && 'rotate-180'
+                  )} />
                 </button>
                 {isExpanded && (
-                  <div className="ml-7 mt-0.5 space-y-0.5 pl-3 border-l border-slate-200">
+                  <div className="ml-4 mt-1 space-y-0.5 pl-4" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
                     {item.children.map(child => (
                       <Link
                         key={child.href}
                         href={child.href}
                         className={cn(
-                          'block px-3 py-1.5 rounded-md text-sm transition-colors',
+                          'block px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
                           pathname === child.href
-                            ? 'text-indigo-700 font-medium bg-indigo-50'
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                            ? 'text-white bg-white/10'
+                            : 'text-white/50 hover:text-white/80 hover:bg-white/5'
                         )}
+                        style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8125rem' }}
                       >
                         {child.label}
                       </Link>
@@ -110,28 +124,34 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              )}
+              className={cn('nav-item', isActive && 'active')}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
+              <item.icon className="h-4 w-4 shrink-0 opacity-80" />
               {item.label}
             </Link>
           )
         })}
       </nav>
 
+      {/* Tonal divider */}
+      <div className="mx-4 h-px opacity-10" style={{ background: 'white' }} />
+
       {/* User footer */}
       {user && (
-        <div className="px-4 py-3 border-t border-slate-200 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-semibold text-indigo-700">
+        <div className="px-4 py-4 shrink-0">
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-2xl"
+            style={{ background: 'rgba(255,255,255,0.08)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)' }}>
+            <div className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+              style={{ background: 'linear-gradient(135deg, #1f5a95, #4f8bd6)', fontFamily: 'Manrope, sans-serif' }}>
               {user.name?.charAt(0).toUpperCase() ?? 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-800 truncate">{user.name}</p>
-              <p className="text-[11px] text-slate-400 capitalize">{user.role}</p>
+              <p className="text-xs font-semibold text-white truncate" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {user.name}
+              </p>
+              <p className="text-[11px] capitalize mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                {user.role}
+              </p>
             </div>
           </div>
         </div>

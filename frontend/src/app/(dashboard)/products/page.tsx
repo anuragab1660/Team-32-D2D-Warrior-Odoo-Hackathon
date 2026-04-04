@@ -7,7 +7,6 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { ActiveBadge } from '@/components/shared/StatusBadge'
-import { Button } from '@/components/ui/button'
 import { PlusIcon, ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -18,10 +17,13 @@ const columns: ColumnDef<Product, unknown>[] = [
     id: 'image',
     header: '',
     cell: ({ row }) => row.original.image_url ? (
-      <Image src={row.original.image_url} alt={row.original.name} width={36} height={36} className="h-9 w-9 rounded-md object-cover" />
+      <Image src={row.original.image_url} alt={row.original.name} width={36} height={36} className="h-9 w-9 rounded-xl object-cover" />
     ) : (
-      <div className="h-9 w-9 rounded-md bg-slate-100 flex items-center justify-center">
-        <ImageIcon className="h-4 w-4 text-slate-300" />
+      <div
+        className="h-9 w-9 rounded-xl flex items-center justify-center"
+        style={{ background: 'var(--surface-container-low)' }}
+      >
+        <ImageIcon className="h-4 w-4" style={{ color: 'var(--on-surface-muted)' }} />
       </div>
     ),
   },
@@ -29,7 +31,11 @@ const columns: ColumnDef<Product, unknown>[] = [
     accessorKey: 'name',
     header: 'Name',
     cell: ({ row }) => (
-      <Link href={`/products/${row.original.id}`} className="font-medium text-indigo-600 hover:underline">
+      <Link
+        href={`/products/${row.original.id}`}
+        className="font-semibold hover:opacity-70 transition-opacity"
+        style={{ fontFamily: 'Inter, sans-serif', color: '#274e82' }}
+      >
         {row.original.name}
       </Link>
     ),
@@ -37,12 +43,20 @@ const columns: ColumnDef<Product, unknown>[] = [
   {
     accessorKey: 'product_type',
     header: 'Type',
-    cell: ({ row }) => <span className="capitalize">{row.original.product_type}</span>,
+    cell: ({ row }) => (
+      <span className="capitalize" style={{ color: 'var(--on-surface-variant)' }}>
+        {row.original.product_type}
+      </span>
+    ),
   },
   {
     accessorKey: 'sales_price',
     header: 'Sales Price',
-    cell: ({ row }) => `₹${row.original.sales_price.toLocaleString()}`,
+    cell: ({ row }) => (
+      <span style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 600 }}>
+        ₹{row.original.sales_price.toLocaleString()}
+      </span>
+    ),
   },
   {
     accessorKey: 'cost_price',
@@ -75,10 +89,10 @@ export default function ProductsPage() {
         description="Manage your product catalog"
         action={
           <Link href="/products/new">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+            <button className="btn-gradient flex items-center gap-2">
               <PlusIcon className="h-4 w-4" />
               New Product
-            </Button>
+            </button>
           </Link>
         }
       />
