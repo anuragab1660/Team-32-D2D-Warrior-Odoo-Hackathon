@@ -4,6 +4,7 @@ const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/roleCheck');
 const c = require('../controllers/invoiceController');
 router.use(authenticate);
+router.get('/my', requireRole('portal'), c.getMyInvoices);
 router.get('/customer/:cid', c.getCustomerInvoices);
 router.get('/', requireRole('admin','internal'), c.getInvoices);
 router.get('/:id', c.getInvoice);

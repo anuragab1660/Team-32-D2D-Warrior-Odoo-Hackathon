@@ -62,7 +62,7 @@ export default function OrderDetailPage() {
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-slate-500 mb-1">Plan</dt>
-              <dd className="font-medium text-slate-900">{order.plan?.name ?? 'No plan'}</dd>
+              <dd className="font-medium text-slate-900">{(order as Record<string, string>).plan_name ?? order.plan?.name ?? 'No plan'}</dd>
             </div>
             <div>
               <dt className="text-slate-500 mb-1">Start Date</dt>
@@ -88,7 +88,7 @@ export default function OrderDetailPage() {
               {order.lines.map(line => (
                 <div key={line.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-slate-800">{line.product?.name ?? 'Product'}</p>
+                    <p className="text-sm font-medium text-slate-800">{(line as Record<string, string>).product_name ?? line.product?.name ?? 'Product'}</p>
                     {line.variant && (
                       <p className="text-xs text-slate-500">{line.variant.attribute}: {line.variant.value}</p>
                     )}

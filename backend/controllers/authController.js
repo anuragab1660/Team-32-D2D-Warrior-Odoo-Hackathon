@@ -374,14 +374,48 @@ const changePassword = async (req, res) => {
   }
 };
 
+// PUT /api/auth/profile
 const updateProfile = async (req, res) => {
-  const { name, phone, address } = req.body;
   try {
+    const { name, company_name, phone, address, city, state, country, postal_code, gstin } = req.body;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      if (name) {
+        await client.query('UPDATE users SET name = $1 WHERE id = $2', [name, req.user.id]);
+      }
+      // Update customer record if portal user
+      if (req.user.role === 'portal') {
+        await client.query(
+          `UPDATE customers SET
+            company_name = COALESCE($1, company_name),
+            phone = COALESCE($2, phone),
+            address = COALESCE($3, address),
+            city = COALESCE($4, city),
+            state = COALESCE($5, state),
+            country = COALESCE($6, country),
+            postal_code = COALESCE($7, postal_code),
+            gstin = COALESCE($8, gstin)
+           WHERE user_id = $9`,
+          [company_name, phone, address, city, state, country, postal_code, gstin, req.user.id]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
     const { rows } = await pool.query(
-      'UPDATE users SET name=COALESCE($1,name) WHERE id=$2 RETURNING id,name,email,role',
-      [name || null, req.user.id]
+      `SELECT u.id, u.name, u.email, u.role, u.is_active, u.is_email_verified, u.created_at,
+              c.id as customer_id, c.company_name, c.phone, c.address, c.city, c.state, c.country, c.postal_code, c.gstin
+       FROM users u
+       LEFT JOIN customers c ON c.user_id = u.id
+       WHERE u.id = $1`,
+      [req.user.id]
     );
-    res.json({ success: true, data: rows[0] });
+    res.json({ success: true, message: 'Profile updated', data: rows[0] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: 'Failed to update profile' });

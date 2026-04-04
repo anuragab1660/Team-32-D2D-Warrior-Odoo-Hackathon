@@ -117,7 +117,7 @@ export default function InvoiceDetailPage() {
               <dl className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <dt className="text-xs text-slate-500 mb-1">Customer</dt>
-                  <dd className="text-sm font-medium">{invoice.customer?.name ?? invoice.customer_id}</dd>
+                  <dd className="text-sm font-medium">{(invoice as Record<string, string>).customer_name ?? invoice.customer?.name ?? invoice.customer_id}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500 mb-1">Status</dt>
@@ -147,7 +147,7 @@ export default function InvoiceDetailPage() {
                     <tbody>
                       {invoice.lines.map(line => (
                         <tr key={line.id} className="border-b border-slate-100">
-                          <td className="py-2">{line.description}</td>
+                          <td className="py-2">{line.description || (line as Record<string, string>).product_name}</td>
                           <td className="py-2 text-right">{line.quantity}</td>
                           <td className="py-2 text-right">₹{line.unit_price.toLocaleString()}</td>
                           <td className="py-2 text-right font-medium">₹{line.line_total.toLocaleString()}</td>

@@ -34,7 +34,10 @@ const createOrder = async (req, res) => {
 
 const verifyPayment = async (req, res) => {
   try {
-    const { order_id, payment_id, signature, invoice_id } = req.body;
+    const order_id = req.body.razorpay_order_id || req.body.order_id;
+    const payment_id = req.body.razorpay_payment_id || req.body.payment_id;
+    const signature = req.body.razorpay_signature || req.body.signature;
+    const { invoice_id } = req.body;
     const isValid = verifyPaymentSignature(order_id, payment_id, signature);
     if (!isValid) return res.status(400).json({ success: false, error: 'Invalid payment signature' });
 
