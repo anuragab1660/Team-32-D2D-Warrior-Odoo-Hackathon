@@ -97,7 +97,7 @@ export default function ProductDetailPage() {
     setSaving(true)
     try {
       const updated = await updateProduct(product.id, { ...data, image_url: imageUrl || undefined })
-      setProduct(updated)
+      if (updated) setProduct(updated)
     } finally {
       setSaving(false)
     }
@@ -106,7 +106,7 @@ export default function ProductDetailPage() {
   const handleToggle = async () => {
     if (!product) return
     const updated = await toggleProduct(product.id)
-    setProduct(updated)
+    if (updated) setProduct(updated)
   }
 
   const handleDelete = async () => {

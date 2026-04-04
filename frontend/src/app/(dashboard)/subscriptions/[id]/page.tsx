@@ -44,7 +44,7 @@ export default function SubscriptionDetailPage() {
     setActionLoading(true)
     try {
       const updated = await updateStatus(subscription.id, status)
-      setSubscription(updated)
+      if (updated) setSubscription(updated)
     } finally {
       setActionLoading(false)
     }

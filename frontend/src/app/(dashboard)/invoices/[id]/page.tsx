@@ -45,14 +45,14 @@ export default function InvoiceDetailPage() {
   const handleConfirm = async () => {
     if (!invoice) return
     setActionLoading(true)
-    try { const updated = await confirmInvoice(invoice.id); setInvoice(updated) }
+    try { const updated = await confirmInvoice(invoice.id); if (updated) setInvoice(updated) }
     finally { setActionLoading(false) }
   }
 
   const handleCancel = async () => {
     if (!invoice) return
     setActionLoading(true)
-    try { const updated = await cancelInvoice(invoice.id); setInvoice(updated) }
+    try { const updated = await cancelInvoice(invoice.id); if (updated) setInvoice(updated) }
     finally { setActionLoading(false) }
   }
 
