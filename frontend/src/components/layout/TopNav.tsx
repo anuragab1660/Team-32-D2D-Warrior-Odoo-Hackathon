@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/utils'
 import { LogOutIcon, UserIcon, SearchIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 
 interface TopNavProps {
   onSearchOpen?: () => void
@@ -25,18 +26,25 @@ export function TopNav({ onSearchOpen }: TopNavProps) {
   }
 
   return (
-    <header className="fixed top-0 right-0 left-60 z-30 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+    <motion.header
+      className="fixed top-0 right-0 left-60 z-30 h-16 bg-white/95 backdrop-blur-sm border-b border-slate-200 flex items-center justify-between px-6"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 text-slate-400 w-64 justify-start"
-          onClick={onSearchOpen}
-        >
-          <SearchIcon className="h-4 w-4" />
-          <span className="text-sm">Search...</span>
-          <kbd className="ml-auto text-[10px] bg-slate-100 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
-        </Button>
+        <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-slate-400 w-64 justify-start hover:border-indigo-300 hover:text-slate-600 transition-colors"
+            onClick={onSearchOpen}
+          >
+            <SearchIcon className="h-4 w-4" />
+            <span className="text-sm">Search...</span>
+            <kbd className="ml-auto text-[10px] bg-slate-100 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
+          </Button>
+        </motion.div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -73,6 +81,6 @@ export function TopNav({ onSearchOpen }: TopNavProps) {
           </DropdownMenu>
         )}
       </div>
-    </header>
+    </motion.header>
   )
 }

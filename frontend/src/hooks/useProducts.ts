@@ -27,48 +27,64 @@ export function useProducts() {
   }, [])
 
   const createProduct = useCallback(async (payload: Partial<Product>) => {
-    const { data } = await api.post<ApiResponse<Product>>('/api/products', payload)
-    toast.success(data.message || 'Product created')
-    return data.data
+    try {
+      const { data } = await api.post<ApiResponse<Product>>('/api/products', payload)
+      toast.success(data.message || 'Product created')
+      return data.data
+    } catch (err) { handleApiError(err) }
   }, [])
 
   const updateProduct = useCallback(async (id: string, payload: Partial<Product>) => {
-    const { data } = await api.put<ApiResponse<Product>>(`/api/products/${id}`, payload)
-    toast.success(data.message || 'Product updated')
-    return data.data
+    try {
+      const { data } = await api.put<ApiResponse<Product>>(`/api/products/${id}`, payload)
+      toast.success(data.message || 'Product updated')
+      return data.data
+    } catch (err) { handleApiError(err) }
   }, [])
 
   const toggleProduct = useCallback(async (id: string) => {
-    const { data } = await api.patch<ApiResponse<Product>>(`/api/products/${id}/toggle`)
-    toast.success(data.message || 'Product updated')
-    return data.data
+    try {
+      const { data } = await api.patch<ApiResponse<Product>>(`/api/products/${id}/toggle`)
+      toast.success(data.message || 'Product updated')
+      return data.data
+    } catch (err) { handleApiError(err) }
   }, [])
 
   const deleteProduct = useCallback(async (id: string) => {
-    const { data } = await api.delete<ApiResponse<unknown>>(`/api/products/${id}`)
-    toast.success(data.message || 'Product deleted')
+    try {
+      const { data } = await api.delete<ApiResponse<unknown>>(`/api/products/${id}`)
+      toast.success(data.message || 'Product deleted')
+    } catch (err) { handleApiError(err) }
   }, [])
 
   const getVariants = useCallback(async (productId: string) => {
-    const { data } = await api.get<ApiResponse<ProductVariant[]>>(`/api/products/${productId}/variants`)
-    return data.data
+    try {
+      const { data } = await api.get<ApiResponse<ProductVariant[]>>(`/api/products/${productId}/variants`)
+      return data.data
+    } catch (err) { handleApiError(err) }
   }, [])
 
   const createVariant = useCallback(async (productId: string, payload: Partial<ProductVariant>) => {
-    const { data } = await api.post<ApiResponse<ProductVariant>>(`/api/products/${productId}/variants`, payload)
-    toast.success(data.message || 'Variant added')
-    return data.data
+    try {
+      const { data } = await api.post<ApiResponse<ProductVariant>>(`/api/products/${productId}/variants`, payload)
+      toast.success(data.message || 'Variant added')
+      return data.data
+    } catch (err) { handleApiError(err) }
   }, [])
 
   const updateVariant = useCallback(async (productId: string, variantId: string, payload: Partial<ProductVariant>) => {
-    const { data } = await api.put<ApiResponse<ProductVariant>>(`/api/products/${productId}/variants/${variantId}`, payload)
-    toast.success(data.message || 'Variant updated')
-    return data.data
+    try {
+      const { data } = await api.put<ApiResponse<ProductVariant>>(`/api/products/${productId}/variants/${variantId}`, payload)
+      toast.success(data.message || 'Variant updated')
+      return data.data
+    } catch (err) { handleApiError(err) }
   }, [])
 
   const deleteVariant = useCallback(async (productId: string, variantId: string) => {
-    await api.delete(`/api/products/${productId}/variants/${variantId}`)
-    toast.success('Variant deleted')
+    try {
+      await api.delete(`/api/products/${productId}/variants/${variantId}`)
+      toast.success('Variant deleted')
+    } catch (err) { handleApiError(err) }
   }, [])
 
   return {

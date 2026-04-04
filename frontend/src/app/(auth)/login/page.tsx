@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { EyeIcon, EyeOffIcon, LoaderIcon } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -42,8 +43,13 @@ export default function LoginPage() {
     }
   }
 
+  const fieldVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.3 } }),
+  }
+
   return (
-    <Card className="shadow-lg border-slate-200">
+    <Card className="shadow-xl border-slate-200/80 backdrop-blur-sm">
       <CardHeader className="space-y-1 pb-4">
         <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
         <CardDescription className="text-center">Sign in to your account to continue</CardDescription>
@@ -51,12 +57,17 @@ export default function LoginPage() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1, x: [0, -6, 6, -4, 4, 0] }}
+              transition={{ duration: 0.4 }}
+              className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600"
+            >
               {error}
-            </div>
+            </motion.div>
           )}
 
-          <div className="space-y-2">
+          <motion.div className="space-y-2" custom={0} initial="hidden" animate="visible" variants={fieldVariants}>
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -66,9 +77,9 @@ export default function LoginPage() {
               className={errors.email ? 'border-red-400' : ''}
             />
             {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
+          <motion.div className="space-y-2" custom={1} initial="hidden" animate="visible" variants={fieldVariants}>
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
               <Link href="/forgot-password" className="text-xs text-indigo-600 hover:underline">
@@ -83,33 +94,43 @@ export default function LoginPage() {
                 {...register('password')}
                 className={errors.password ? 'border-red-400 pr-10' : 'pr-10'}
               />
-              <button
+              <motion.button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                whileTap={{ scale: 0.85 }}
               >
                 {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-              </button>
+              </motion.button>
             </div>
             {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-          </div>
+          </motion.div>
 
-          <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : 'Sign In'}
-          </Button>
+          <motion.div custom={2} initial="hidden" animate="visible" variants={fieldVariants}>
+            <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+              <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 shadow-sm" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : 'Sign In'}
+              </Button>
+            </motion.div>
+          </motion.div>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <motion.p
+          className="mt-6 text-center text-sm text-slate-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-indigo-600 font-medium hover:underline">
             Sign up
           </Link>
-        </p>
+        </motion.p>
       </CardContent>
     </Card>
   )

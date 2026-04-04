@@ -356,6 +356,7 @@ const getMe = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
 const changePassword = async (req, res) => {
   const { current_password, new_password } = req.body;
   if (!current_password || !new_password) return res.status(400).json({ success: false, error: 'Both current and new password are required' });
@@ -374,6 +375,15 @@ const changePassword = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  const { name, phone, address } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'UPDATE users SET name=COALESCE($1,name) WHERE id=$2 RETURNING id,name,email,role',
+      [name || null, req.user.id]
+    );
+    res.json({ success: true, data: rows[0] });
+=======
 // PUT /api/auth/profile
 const updateProfile = async (req, res) => {
   try {
@@ -416,10 +426,15 @@ const updateProfile = async (req, res) => {
       [req.user.id]
     );
     res.json({ success: true, message: 'Profile updated', data: rows[0] });
+>>>>>>> a124855036b2bfa396882831dba2607e0654b7cb
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: 'Failed to update profile' });
   }
 };
 
+<<<<<<< HEAD
 module.exports = { login, signup, verifyEmail, createInternalUser, acceptInvite, resendInvite, forgotPassword, resetPassword, refreshToken, getMe, changePassword, updateProfile };
+=======
+module.exports = { login, signup, verifyEmail, createInternalUser, acceptInvite, resendInvite, forgotPassword, resetPassword, refreshToken, getMe, updateProfile };
+>>>>>>> a124855036b2bfa396882831dba2607e0654b7cb
