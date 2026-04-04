@@ -94,7 +94,7 @@ const updateProduct = async (req, res) => {
     res.json({ success: true, message: 'Product updated', data: rows[0] });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: 'Failed to update product' });
+    res.status(500).json({ success: false, error: 'Failed to update product', detail: err.message });
   }
 };
 

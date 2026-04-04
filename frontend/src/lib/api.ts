@@ -53,7 +53,8 @@ export function handleApiError(err: unknown, form?: { setError: (field: string, 
     if (form && res.details) {
       res.details.forEach(({ field, message }) => form.setError(field, { message }))
     }
-    toast.error(res.error || 'Something went wrong')
+    const detail = (res as Record<string, string>).detail
+    toast.error(detail ? `${res.error}: ${detail}` : res.error || 'Something went wrong')
   } else {
     toast.error('Network error. Please try again.')
   }
