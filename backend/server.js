@@ -17,6 +17,7 @@ const paymentRoutes = require('./routes/payments');
 const reportRoutes = require('./routes/reports');
 const uploadRoutes = require('./routes/upload');
 const userRoutes = require('./routes/users');
+const contentRoutes = require('./routes/content');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/customers', require('./routes/customers'));
+app.use('/api/content', contentRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

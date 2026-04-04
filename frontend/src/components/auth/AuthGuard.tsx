@@ -32,7 +32,9 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
       return
     }
     if (allowedRoles && !allowedRoles.includes(user.role as UserRole)) {
-      router.replace(user.role === 'portal' ? '/home' : '/dashboard')
+      if (user.role === 'portal') router.replace('/home')
+      else if (user.role === 'internal') router.replace('/internal/dashboard')
+      else router.replace('/dashboard')
     }
   }, [mounted, user, loading, allowedRoles, router])
 

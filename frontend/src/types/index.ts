@@ -1,9 +1,9 @@
 export type UserRole = 'admin' | 'internal' | 'portal'
 export type BillingPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly'
-export type SubscriptionStatus = 'draft' | 'quotation' | 'confirmed' | 'active' | 'closed'
-export type InvoiceStatus = 'draft' | 'confirmed' | 'paid' | 'cancelled'
-export type PaymentStatus = 'pending' | 'success' | 'failed'
-export type PaymentMethod = 'razorpay' | 'bank_transfer' | 'cash' | 'other'
+export type SubscriptionStatus = 'draft' | 'quotation' | 'confirmed' | 'active' | 'paused' | 'cancelled' | 'expired' | 'closed'
+export type InvoiceStatus = 'draft' | 'confirmed' | 'sent' | 'paid' | 'overdue' | 'cancelled' | string
+export type PaymentStatus = 'pending' | 'success' | 'failed' | 'completed' | string
+export type PaymentMethod = 'razorpay' | 'bank_transfer' | 'cheque' | 'cash' | 'upi' | 'other'
 export type DiscountType = 'fixed' | 'percentage'
 export type TaxType = 'percentage' | 'fixed'
 export type ProductType = 'service' | 'physical' | 'digital' | 'other'
@@ -282,6 +282,20 @@ export interface PendingInvitation {
   expires_at: string
   is_expired: boolean
   status: string
+}
+
+export interface ContentBlock {
+  id: string
+  key: string
+  title: string
+  body: string
+  is_active: boolean
+  created_by?: string
+  updated_by?: string
+  created_by_name?: string
+  updated_by_name?: string
+  created_at: string
+  updated_at?: string
 }
 
 export interface CartItem {

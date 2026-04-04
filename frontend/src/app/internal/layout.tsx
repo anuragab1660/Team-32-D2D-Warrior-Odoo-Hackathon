@@ -1,22 +1,19 @@
 'use client'
 
-import { useState } from 'react'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { InternalSidebar } from '@/components/layout/InternalSidebar'
 import { TopNav } from '@/components/layout/TopNav'
 import { AuthGuard } from '@/components/auth/AuthGuard'
-import { CommandPalette } from '@/components/layout/CommandPalette'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [cmdOpen, setCmdOpen] = useState(false)
+export default function InternalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   return (
-    <AuthGuard allowedRoles={['admin']}>
+    <AuthGuard allowedRoles={['internal']}>
       <div className="min-h-screen bg-slate-50">
-        <Sidebar />
-        <TopNav onSearchOpen={() => setCmdOpen(true)} />
+        <InternalSidebar />
+        <TopNav />
         <main className="ml-60 pt-16 min-h-screen">
           <div className="p-6 max-w-7xl mx-auto">
             <AnimatePresence mode="wait">
@@ -32,7 +29,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </AnimatePresence>
           </div>
         </main>
-        <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
       </div>
     </AuthGuard>
   )

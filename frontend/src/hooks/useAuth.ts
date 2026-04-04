@@ -54,6 +54,7 @@ export function useAuth() {
       globalUser = userData
       setUser(userData)
       if (userData.role === 'portal') router.push('/home')
+      else if (userData.role === 'internal') router.push('/internal/dashboard')
       else router.push('/dashboard')
     },
     [router]
