@@ -3,11 +3,12 @@ const getPagination = (p,l) => { const pg=Math.max(1,parseInt(p)||1); const lm=M
 
 const getInvoices = async (req, res) => {
   try {
-    const { status, customer, page, limit } = req.query;
+    const { status, customer, subscription_id, page, limit } = req.query;
     const { limit: lim, offset, page: pg } = getPagination(page, limit);
     const conds=[]; const params=[]; let idx=1;
     if (status) { conds.push(`i.status=$${idx++}`); params.push(status); }
     if (customer) { conds.push(`u.name ILIKE $${idx++}`); params.push(`%${customer}%`); }
+    if (subscription_id) { conds.push(`i.subscription_id=$${idx++}`); params.push(subscription_id); }
     const where = conds.length ? 'AND '+conds.join(' AND ') : '';
     const total = parseInt((await pool.query(`SELECT COUNT(*) FROM invoices i JOIN customers c ON c.id=i.customer_id JOIN users u ON u.id=c.user_id WHERE 1=1 ${where}`, params)).rows[0].count);
     params.push(lim,offset);

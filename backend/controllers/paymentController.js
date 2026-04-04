@@ -4,11 +4,12 @@ const getPagination = (p,l) => { const pg=Math.max(1,parseInt(p)||1); const lm=M
 
 const getPayments = async (req, res) => {
   try {
-    const { status, method, page, limit } = req.query;
+    const { status, method, subscription_id, page, limit } = req.query;
     const { limit: lim, offset, page: pg } = getPagination(page, limit);
     const conds=[]; const params=[]; let idx=1;
     if (status) { conds.push(`p.status=$${idx++}`); params.push(status); }
     if (method) { conds.push(`p.payment_method=$${idx++}`); params.push(method); }
+    if (subscription_id) { conds.push(`i.subscription_id=$${idx++}`); params.push(subscription_id); }
     const where = conds.length ? 'WHERE '+conds.join(' AND ') : '';
     const total = parseInt((await pool.query(`SELECT COUNT(*) FROM payments p ${where}`, params)).rows[0].count);
     params.push(lim,offset);

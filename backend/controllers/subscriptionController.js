@@ -235,7 +235,7 @@ const generateInvoice = async (req, res) => {
 
 const fromCart = async (req, res) => {
   try {
-    const { items } = req.body;
+    const { items, billing_period, start_date: bodyStartDate, plan_id: bodyPlanId, notes } = req.body;
     if (!items || !items.length) return res.status(400).json({ success: false, error: 'Cart is empty' });
 
     // Get portal user's customer record
@@ -243,16 +243,24 @@ const fromCart = async (req, res) => {
     if (!custRes.rows[0]) return res.status(400).json({ success: false, error: 'Customer profile not found. Please complete your profile.' });
     const customer_id = custRes.rows[0].id;
 
-    const plan_id = items.find(i => i.plan_id)?.plan_id || null;
-    const start_date = new Date().toISOString().split('T')[0];
+    const plan_id = bodyPlanId || items.find(i => i.plan_id)?.plan_id || null;
+    const bp = billing_period || 'monthly';
+    const startBase = bodyStartDate ? new Date(bodyStartDate) : new Date();
+    const start_date = startBase.toISOString().split('T')[0];
+
+    let expiration_date = null;
+    if (bp === 'daily')   { const d = new Date(startBase); d.setDate(d.getDate() + 1); expiration_date = d; }
+    if (bp === 'weekly')  { const d = new Date(startBase); d.setDate(d.getDate() + 7); expiration_date = d; }
+    if (bp === 'monthly') { const d = new Date(startBase); d.setMonth(d.getMonth() + 1); expiration_date = d; }
+    if (bp === 'yearly')  { const d = new Date(startBase); d.setFullYear(d.getFullYear() + 1); expiration_date = d; }
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       const { rows } = await client.query(
-        `INSERT INTO subscriptions (customer_id, plan_id, start_date, created_by, subscription_number)
-         VALUES ($1, $2, $3, $4, '') RETURNING *`,
-        [customer_id, plan_id, start_date, req.user.id]
+        `INSERT INTO subscriptions (customer_id, plan_id, start_date, expiration_date, status, notes, created_by, subscription_number)
+         VALUES ($1, $2, $3, $4, 'active', $5, $6, '') RETURNING *`,
+        [customer_id, plan_id, start_date, expiration_date, notes || null, req.user.id]
       );
       const sub = rows[0];
 

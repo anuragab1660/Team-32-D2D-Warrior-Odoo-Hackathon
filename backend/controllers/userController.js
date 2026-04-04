@@ -134,4 +134,50 @@ const resendInvite = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, inviteUser, toggleUser, resendInvite };
+const getInternalUsers = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, name, email, role, is_active, is_email_verified, created_at
+       FROM users WHERE role = 'internal' ORDER BY created_at DESC`
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to fetch internal users' });
+  }
+};
+
+const createInternalUser = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, error: 'Name, email, and password are required' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ success: false, error: 'Password must contain uppercase, lowercase, and a number' });
+    }
+
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (existing.rows[0]) {
+      return res.status(400).json({ success: false, error: 'Email already registered' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const { rows } = await pool.query(
+      `INSERT INTO users (name, email, password_hash, role, is_active, is_email_verified, invite_accepted_at, created_by)
+       VALUES ($1, $2, $3, 'internal', true, true, NOW(), $4)
+       RETURNING id, name, email, role, is_active, created_at`,
+      [name, email.toLowerCase(), passwordHash, req.user.id]
+    );
+    res.status(201).json({ success: true, message: 'Employee created successfully', data: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to create employee' });
+  }
+};
+
+module.exports = { getUsers, inviteUser, toggleUser, resendInvite, getInternalUsers, createInternalUser };

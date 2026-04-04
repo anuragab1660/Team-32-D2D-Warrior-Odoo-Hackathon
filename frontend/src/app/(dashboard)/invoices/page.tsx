@@ -1,74 +1,126 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useInvoices } from '@/hooks/useInvoices'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { DataTable } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { PaginationControls } from '@/components/shared/PaginationControls'
-import type { ColumnDef } from '@tanstack/react-table'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { FileTextIcon } from 'lucide-react'
 import type { Invoice } from '@/types'
 
-const columns: ColumnDef<Invoice, unknown>[] = [
-  {
-    accessorKey: 'invoice_number',
-    header: 'Invoice #',
-    cell: ({ row }) => (
-      <Link href={`/invoices/${row.original.id}`} className="font-medium text-indigo-600 hover:underline">
-        {row.original.invoice_number}
-      </Link>
-    ),
-  },
-  {
-    accessorKey: 'customer_name',
-    header: 'Customer',
-    cell: ({ row }) => (row.original as unknown as Record<string, string>).customer_name ?? row.original.customer?.name ?? row.original.customer_id,
-  },
-  {
-    accessorKey: 'issued_date',
-    header: 'Issued',
-    cell: ({ row }) => new Date(row.original.issued_date).toLocaleDateString(),
-  },
-  {
-    accessorKey: 'due_date',
-    header: 'Due',
-    cell: ({ row }) => row.original.due_date ? new Date(row.original.due_date).toLocaleDateString() : '—',
-  },
-  {
-    accessorKey: 'grand_total',
-    header: 'Total',
-    cell: ({ row }) => `₹${row.original.grand_total.toLocaleString()}`,
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => <StatusBadge status={row.original.status} type="invoice" />,
-  },
-]
+const STATUS_TABS = ['all', 'sent', 'paid', 'overdue', 'cancelled'] as const
+type StatusTab = typeof STATUS_TABS[number]
 
 export default function InvoicesPage() {
   const { invoices, loading, pagination, fetchInvoices } = useInvoices()
+  const [activeTab, setActiveTab] = useState<StatusTab>('all')
 
-  useEffect(() => {
-    fetchInvoices()
-  }, [fetchInvoices])
+  const load = useCallback((page = 1) => {
+    fetchInvoices({ status: activeTab === 'all' ? undefined : activeTab, page })
+  }, [fetchInvoices, activeTab])
+
+  useEffect(() => { load(1) }, [load])
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+    >
       <PageHeader title="Invoices" description="View and manage all invoices" />
-      <DataTable
-        columns={columns}
-        data={invoices}
-        loading={loading}
-        emptyTitle="No invoices found"
-        emptyDescription="Invoices are generated from subscriptions."
-      />
+
+      {/* Status tabs */}
+      <div className="flex gap-1 bg-slate-100 rounded-lg p-1 w-fit">
+        {STATUS_TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors capitalize ${
+              activeTab === tab
+                ? 'bg-white text-indigo-700 shadow-sm font-semibold'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab === 'all' ? 'All' : tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-slate-200 overflow-hidden bg-white overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50">
+              <TableHead>Invoice #</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Issued</TableHead>
+              <TableHead>Due</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 6 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : invoices.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-16 text-slate-400">
+                  <FileTextIcon className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                  <p className="font-medium">No invoices found</p>
+                  <p className="text-sm">Invoices are generated from subscriptions.</p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              (invoices as (Invoice & Record<string, unknown>)[]).map((inv, i) => (
+                <motion.tr
+                  key={inv.id}
+                  className="hover:bg-slate-50 border-b border-slate-100 last:border-0"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                >
+                  <TableCell>
+                    <Link href={`/invoices/${inv.id}`} className="font-medium text-indigo-600 hover:underline">
+                      {(inv.invoice_number as string)}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-slate-700 text-sm">
+                    {(inv.customer_name as string) ?? inv.customer?.name ?? '—'}
+                  </TableCell>
+                  <TableCell className="text-slate-600 text-sm">
+                    {new Date(inv.issued_date).toLocaleDateString('en-IN')}
+                  </TableCell>
+                  <TableCell className="text-slate-600 text-sm">
+                    {inv.due_date ? new Date(inv.due_date as string).toLocaleDateString('en-IN') : '—'}
+                  </TableCell>
+                  <TableCell className="font-semibold text-slate-800">
+                    ₹{Number(inv.grand_total).toLocaleString('en-IN')}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={inv.status} type="invoice" />
+                  </TableCell>
+                </motion.tr>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
       <PaginationControls
         page={pagination.page}
         totalPages={pagination.pages}
-        onPageChange={(p) => fetchInvoices({ page: p })}
+        onPageChange={(p) => load(p)}
       />
-    </div>
+    </motion.div>
   )
 }

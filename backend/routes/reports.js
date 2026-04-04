@@ -10,4 +10,7 @@ router.get('/active-subscriptions', c.getActiveSubscriptions);
 router.get('/invoice-summary', c.getInvoiceSummary);
 router.get('/overdue-invoices', c.getOverdueInvoices);
 router.get('/pending-invitations', requireRole('admin'), c.getPendingInvitations);
+router.get('/subscription-status-breakdown', c.getSubscriptionStatusBreakdown);
+router.get('/recent-activity', c.getRecentActivity);
+router.get('/top-products', c.getTopProducts);
 module.exports = router;

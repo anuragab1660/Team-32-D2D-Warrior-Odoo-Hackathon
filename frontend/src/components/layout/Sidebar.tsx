@@ -28,7 +28,13 @@ const navItems: NavItem[] = [
   { label: 'Invoices', href: '/invoices', icon: FileTextIcon },
   { label: 'Payments', href: '/payments', icon: CreditCardIcon },
   { label: 'Reports', href: '/reports', icon: BarChart3Icon },
-  { label: 'Users', href: '/users', icon: UsersIcon, roles: ['admin'] },
+  {
+    label: 'Users', href: '/users', icon: UsersIcon, roles: ['admin'],
+    children: [
+      { label: 'All Users', href: '/users' },
+      { label: 'Employees', href: '/users/internal' },
+    ],
+  },
   {
     label: 'Configuration', href: '/configuration', icon: SettingsIcon,
     children: [
@@ -43,9 +49,11 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname()
   const { user } = useAuthStore()
-  const [expanded, setExpanded] = useState<string | null>(
-    pathname.startsWith('/dashboard/configuration') ? 'Configuration' : null
-  )
+  const [expanded, setExpanded] = useState<string | null>(() => {
+    if (pathname.startsWith('/configuration')) return 'Configuration'
+    if (pathname.startsWith('/users')) return 'Users'
+    return null
+  })
 
   const filteredNav = navItems.filter(item =>
     !item.roles || item.roles.includes(user?.role ?? '')
