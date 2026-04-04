@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -24,7 +24,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -65,7 +65,6 @@ export default function ResetPasswordPage() {
               {error}
             </div>
           )}
-
           <div className="space-y-2">
             <Label htmlFor="password">New Password</Label>
             <div className="relative">
@@ -86,7 +85,6 @@ export default function ResetPasswordPage() {
             </div>
             {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm New Password</Label>
             <Input
@@ -98,17 +96,10 @@ export default function ResetPasswordPage() {
             />
             {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
           </div>
-
           <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                Resetting...
-              </>
-            ) : 'Reset Password'}
+            {isLoading ? <><LoaderIcon className="mr-2 h-4 w-4 animate-spin" />Resetting...</> : 'Reset Password'}
           </Button>
         </form>
-
         <p className="mt-6 text-center">
           <Link href="/login" className="text-sm text-indigo-600 font-medium hover:underline">
             Back to login
@@ -116,5 +107,13 @@ export default function ResetPasswordPage() {
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
   )
 }
