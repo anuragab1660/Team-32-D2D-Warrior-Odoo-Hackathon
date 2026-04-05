@@ -93,7 +93,7 @@ const signup = async (req, res) => {
       const newUser = userRes.rows[0];
 
       await client.query(
-        'UPDATE users SET verify_token = $1, verify_token_exp = NOW() + INTERVAL \''24 hours\'' WHERE id = $2',
+        "UPDATE users SET verify_token = $1, verify_token_exp = NOW() + INTERVAL '24 hours' WHERE id = $2",
         [verifyTokenHash, newUser.id]
       );
 
