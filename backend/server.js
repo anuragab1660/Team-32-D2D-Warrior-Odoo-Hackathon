@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const runMigrations = require('./db/migrate');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -79,8 +80,15 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`ProsubX Backend running on port ${PORT}`);
+runMigrations().then(() => {
+  app.listen(PORT, () => {
+    console.log(`ProsubX Backend running on port ${PORT}`);
+  });
+}).catch(err => {
+  console.error('Migration error, starting anyway:', err.message);
+  app.listen(PORT, () => {
+    console.log(`ProsubX Backend running on port ${PORT}`);
+  });
 });
 
 module.exports = app;
