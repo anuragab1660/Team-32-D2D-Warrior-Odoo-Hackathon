@@ -6,9 +6,9 @@ const getDiscounts = async (req, res) => {
     const { is_active, page, limit } = req.query;
     const { limit: lim, offset, page: pg } = getPagination(page, limit);
     const conditions = []; const params = []; let idx = 1;
-    if (is_active !== undefined) { conditions.push(`is_active = $${idx++}`); params.push(is_active === 'true'); }
+    if (is_active !== undefined) { conditions.push(`d.is_active = $${idx++}`); params.push(is_active === 'true'); }
     const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-    const total = parseInt((await pool.query(`SELECT COUNT(*) FROM discounts ${where}`, params)).rows[0].count);
+    const total = parseInt((await pool.query(`SELECT COUNT(*) FROM discounts d LEFT JOIN users u ON u.id=d.created_by ${where}`, params)).rows[0].count);
     params.push(lim, offset);
     const { rows } = await pool.query(`SELECT d.*, u.name as created_by_name FROM discounts d LEFT JOIN users u ON u.id=d.created_by ${where} ORDER BY d.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`, params);
     res.json({ success: true, data: rows, pagination: { page: pg, limit: lim, total, pages: Math.ceil(total/lim) } });

@@ -34,9 +34,22 @@ const getMySubscriptions = async (req, res) => {
     const custRes = await pool.query('SELECT id FROM customers WHERE user_id=$1', [req.user.id]);
     if (!custRes.rows[0]) return res.status(404).json({ success: false, error: 'Customer profile not found' });
     const { rows } = await pool.query(
-      `SELECT s.*, rp.name as plan_name, rp.price as plan_price, rp.billing_period
-       FROM subscriptions s LEFT JOIN recurring_plans rp ON rp.id=s.plan_id
-       WHERE s.customer_id=$1 ORDER BY s.created_at DESC`, [custRes.rows[0].id]
+      `SELECT s.*,
+              rp.name as plan_name, rp.price as plan_price, rp.billing_period,
+              COUNT(sl.id) as lines_count,
+              COALESCE(
+                JSON_AGG(
+                  JSON_BUILD_OBJECT('product_name', p.name, 'unit_price', sl.unit_price, 'quantity', sl.quantity)
+                ) FILTER (WHERE sl.id IS NOT NULL),
+                '[]'
+              ) as lines
+       FROM subscriptions s
+       LEFT JOIN recurring_plans rp ON rp.id = s.plan_id
+       LEFT JOIN subscription_lines sl ON sl.subscription_id = s.id
+       LEFT JOIN products p ON p.id = sl.product_id
+       WHERE s.customer_id = $1
+       GROUP BY s.id, rp.name, rp.price, rp.billing_period
+       ORDER BY s.created_at DESC`, [custRes.rows[0].id]
     );
     res.json({ success: true, data: rows });
   } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch subscriptions' }); }
@@ -124,7 +137,7 @@ const updateSubscription = async (req, res) => {
 const updateStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const valid = ['quotation','confirmed','active','closed'];
+    const valid = ['quotation','confirmed','active','paused','cancelled','expired','closed'];
     if (!valid.includes(status)) return res.status(400).json({ success: false, error: 'Invalid status' });
     const { rows } = await pool.query('UPDATE subscriptions SET status=$1 WHERE id=$2 RETURNING *', [status, req.params.id]);
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Subscription not found' });

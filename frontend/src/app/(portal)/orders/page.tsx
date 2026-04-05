@@ -140,10 +140,15 @@ export default function OrdersPage() {
             const daysLeft = sub.expiration_date ? daysUntil(sub.expiration_date) : null
             const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0
             const isExpired = sub.status === 'expired' || (daysLeft !== null && daysLeft < 0)
-            const planName = (sub as unknown as Record<string,string>).plan_name ?? sub.plan?.name ?? 'No plan'
-            const billingPeriod = (sub as unknown as Record<string,string>).billing_period
-            const linesCount = (sub as unknown as Record<string,unknown>).lines_count as number ?? sub.lines?.length ?? 0
-            const totalAmount = (sub as unknown as Record<string,unknown>).total_amount as number ?? 0
+            const planName = (sub as unknown as Record<string,string>).plan_name ?? null
+            const billingPeriod = (sub as unknown as Record<string,string>).billing_period ?? null
+            const lines = (sub as unknown as Record<string,unknown>).lines as { product_name: string; unit_price: number; quantity: number }[] ?? []
+            const linesCount = lines.length
+            const productNames = lines.map(l => l.product_name).filter(Boolean)
+            const cardTitle = productNames.length > 0
+              ? productNames.join(', ')
+              : (planName ?? 'Subscription')
+            const totalAmount = lines.reduce((sum, l) => sum + (l.unit_price * l.quantity), 0)
 
             let barColor = 'bg-indigo-500'
             if (isExpiringSoon) barColor = 'bg-amber-400'
@@ -159,27 +164,28 @@ export default function OrdersPage() {
               >
                 <Card className="border-slate-200 hover:shadow-md transition-shadow">
                   <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-bold text-slate-900">{sub.subscription_number}</p>
-                        {isExpiringSoon && !isExpired && (
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">Expiring soon</Badge>
-                        )}
-                        {isExpired && (
-                          <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">Expired</Badge>
-                        )}
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="font-bold text-slate-900 text-base leading-snug">{cardTitle}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {planName && (
+                            <span className="text-xs text-slate-500">{planName}</span>
+                          )}
+                          {billingPeriod && (
+                            <Badge variant="outline" className="text-xs capitalize">{billingPeriod}</Badge>
+                          )}
+                          <StatusBadge status={sub.status} type="subscription" />
+                          {isExpiringSoon && !isExpired && (
+                            <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">Expiring soon</Badge>
+                          )}
+                          {isExpired && (
+                            <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">Expired</Badge>
+                          )}
+                        </div>
                       </div>
                       <Link href={`/orders/${sub.id}`}>
-                        <ArrowRightIcon className="h-4 w-4 text-slate-400 hover:text-indigo-600" />
+                        <ArrowRightIcon className="h-4 w-4 text-slate-400 hover:text-indigo-600 mt-1" />
                       </Link>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-sm text-slate-600">{planName}</span>
-                      {billingPeriod && (
-                        <Badge variant="outline" className="text-xs capitalize">{billingPeriod}</Badge>
-                      )}
-                      <StatusBadge status={sub.status} type="subscription" />
                     </div>
 
                     {sub.expiration_date && (
@@ -195,8 +201,10 @@ export default function OrdersPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-slate-500">
-                        {linesCount > 0 ? `${linesCount} product${linesCount !== 1 ? 's' : ''}` : 'No products'}
-                        {totalAmount > 0 ? ` · ₹${totalAmount.toLocaleString('en-IN')}/mo` : ''}
+                        {linesCount > 0
+                          ? `${linesCount} product${linesCount !== 1 ? 's' : ''}${totalAmount > 0 ? ` · ₹${totalAmount.toLocaleString('en-IN')}` : ''}`
+                          : 'No products'
+                        }
                       </div>
                       <div className="flex gap-2">
                         <Link href={`/orders/${sub.id}`}>

@@ -1,96 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { usePayments } from '@/hooks/usePayments'
-import { useInvoices } from '@/hooks/useInvoices'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { PaginationControls } from '@/components/shared/PaginationControls'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { PlusIcon, LoaderIcon, CopyIcon, CreditCardIcon } from 'lucide-react'
+import { CopyIcon, CreditCardIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Invoice } from '@/types'
-
-const PAYMENT_METHODS = [
-  { value: 'bank_transfer', label: 'Bank Transfer' },
-  { value: 'cheque', label: 'Cheque' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'upi', label: 'UPI' },
-  { value: 'razorpay', label: 'Razorpay' },
-  { value: 'other', label: 'Other' },
-]
-
-const defaultForm = {
-  invoice_id: '',
-  amount: '',
-  payment_method: 'bank_transfer',
-  reference_number: '',
-  payment_date: new Date().toISOString().split('T')[0],
-  notes: '',
-}
 
 export default function PaymentsPage() {
-  const { payments, loading, pagination, fetchPayments, manualPayment } = usePayments()
-  const { invoices, fetchInvoices } = useInvoices()
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [form, setForm] = useState(defaultForm)
-  const [saving, setSaving] = useState(false)
-  const [formError, setFormError] = useState('')
+  const { payments, loading, pagination, fetchPayments } = usePayments()
 
   useEffect(() => {
     fetchPayments()
-    // Fetch unpaid invoices for the dropdown
-    fetchInvoices({ status: 'sent' })
-  }, [fetchPayments, fetchInvoices])
-
-  const unpaidInvoices = (invoices as (Invoice & Record<string, unknown>)[]).filter(
-    inv => inv.status === 'sent' || inv.status === 'overdue' || inv.status === 'pending'
-  )
-
-  const handleInvoiceSelect = (invoiceId: string) => {
-    const inv = invoices.find(i => i.id === invoiceId) as (Invoice & Record<string, unknown>) | undefined
-    setForm(f => ({
-      ...f,
-      invoice_id: invoiceId,
-      amount: inv ? String(inv.grand_total) : f.amount,
-    }))
-  }
-
-  const handleCreate = async () => {
-    setFormError('')
-    if (!form.invoice_id) { setFormError('Please select an invoice'); return }
-    if (!form.amount || parseFloat(form.amount) <= 0) { setFormError('Enter a valid amount'); return }
-    if (!form.payment_date) { setFormError('Payment date is required'); return }
-
-    setSaving(true)
-    try {
-      await manualPayment({
-        invoice_id: form.invoice_id,
-        amount: parseFloat(form.amount),
-        payment_method: form.payment_method,
-        payment_date: form.payment_date,
-        reference_number: form.reference_number || undefined,
-        notes: form.notes || undefined,
-      })
-      setDialogOpen(false)
-      setForm(defaultForm)
-      fetchPayments()
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } }
-      setFormError(e?.response?.data?.error || 'Failed to record payment')
-    } finally {
-      setSaving(false)
-    }
-  }
+  }, [fetchPayments])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => toast.success('Copied!')).catch(() => {})
@@ -106,14 +33,6 @@ export default function PaymentsPage() {
       <PageHeader
         title="Payments"
         description="Track all payment transactions"
-        action={
-          <Button
-            onClick={() => { setFormError(''); setDialogOpen(true) }}
-            className="bg-indigo-600 hover:bg-indigo-700 gap-2"
-          >
-            <PlusIcon className="h-4 w-4" />Record Payment
-          </Button>
-        }
       />
 
       <div className="rounded-xl border border-slate-200 overflow-hidden bg-white overflow-x-auto">
@@ -206,96 +125,6 @@ export default function PaymentsPage() {
         totalPages={pagination.pages}
         onPageChange={(p) => fetchPayments({ page: p })}
       />
-
-      {/* Manual Payment Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) setFormError(''); setDialogOpen(o) }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Record Manual Payment</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {formError && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{formError}</div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Invoice <span className="text-red-500">*</span></Label>
-              <Select value={form.invoice_id} onValueChange={handleInvoiceSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select unpaid invoice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {invoices.map(inv => (
-                    <SelectItem key={inv.id} value={inv.id}>
-                      {(inv as Invoice & Record<string, unknown>).invoice_number as string ?? inv.id} — ₹{Number(inv.grand_total).toLocaleString('en-IN')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Amount (₹) <span className="text-red-500">*</span></Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.amount}
-                  onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Payment Date <span className="text-red-500">*</span></Label>
-                <Input
-                  type="date"
-                  value={form.payment_date}
-                  onChange={e => setForm(f => ({ ...f, payment_date: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Payment Method</Label>
-              <Select value={form.payment_method} onValueChange={v => setForm(f => ({ ...f, payment_method: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_METHODS.map(m => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Reference / Transaction Number</Label>
-              <Input
-                placeholder="e.g. UTR number, cheque no."
-                value={form.reference_number}
-                onChange={e => setForm(f => ({ ...f, reference_number: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea
-                placeholder="Optional notes"
-                rows={2}
-                value={form.notes}
-                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
-              {saving ? <><LoaderIcon className="mr-2 h-4 w-4 animate-spin" />Recording...</> : 'Record Payment'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </motion.div>
   )
 }

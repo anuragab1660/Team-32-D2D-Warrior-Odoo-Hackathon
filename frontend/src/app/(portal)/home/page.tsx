@@ -86,7 +86,7 @@ export default function PortalHomePage() {
   const pendingInvoices = invoices.filter(i => i.status === 'confirmed' || i.status === 'overdue')
   const totalSpentThisYear = invoices
     .filter(i => i.status === 'paid' && new Date(i.issued_date).getFullYear() === new Date().getFullYear())
-    .reduce((sum, i) => sum + (i.grand_total ?? 0), 0)
+    .reduce((sum, i) => sum + Number(i.grand_total ?? 0), 0)
 
   const nextDueInvoice = pendingInvoices
     .filter(i => i.due_date)
@@ -134,7 +134,12 @@ export default function PortalHomePage() {
           <AlertTriangleIcon className="h-5 w-5 text-amber-500 shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-800">
-              Your subscription {(expiringSoon[0] as unknown as Record<string,string>).subscription_number ?? expiringSoon[0].subscription_number} expires in {daysUntil(expiringSoon[0].expiration_date!)} day{daysUntil(expiringSoon[0].expiration_date!) !== 1 ? 's' : ''}.
+              {(() => {
+                const lines0 = (expiringSoon[0] as unknown as Record<string,unknown>).lines as { product_name: string }[] ?? []
+                const names0 = lines0.map(l => l.product_name).filter(Boolean)
+                const label0 = names0.length > 0 ? names0.join(', ') : ((expiringSoon[0] as unknown as Record<string,string>).plan_name ?? 'Your subscription')
+                return `${label0} expires in ${daysUntil(expiringSoon[0].expiration_date!)} day${daysUntil(expiringSoon[0].expiration_date!) !== 1 ? 's' : ''}.`
+              })()}
             </p>
           </div>
           <Link href="/orders" className="text-xs font-semibold text-amber-700 hover:underline whitespace-nowrap">Renew now →</Link>
@@ -235,8 +240,11 @@ export default function PortalHomePage() {
                 const usedDays = getDaysUsed(sub.start_date)
                 const daysLeft = sub.expiration_date ? daysUntil(sub.expiration_date) : null
                 const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0
-                const planName = (sub as unknown as Record<string,string>).plan_name ?? sub.plan?.name ?? 'No plan'
+                const planName = (sub as unknown as Record<string,string>).plan_name ?? null
                 const billingPeriod = (sub as unknown as Record<string,string>).billing_period
+                const subLines = (sub as unknown as Record<string,unknown>).lines as { product_name: string; unit_price: number; quantity: number }[] ?? []
+                const productNames = subLines.map(l => l.product_name).filter(Boolean)
+                const cardTitle = productNames.length > 0 ? productNames.join(', ') : (planName ?? 'Subscription')
 
                 return (
                   <motion.div
@@ -249,7 +257,7 @@ export default function PortalHomePage() {
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-slate-800">{sub.subscription_number}</p>
+                        <p className="text-sm font-semibold text-slate-800">{cardTitle}</p>
                         {isExpiringSoon && (
                           <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">Expiring soon</Badge>
                         )}
@@ -257,7 +265,7 @@ export default function PortalHomePage() {
                       <StatusBadge status={sub.status} type="subscription" />
                     </div>
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs text-slate-500">{planName}</span>
+                      {planName && <span className="text-xs text-slate-500">{planName}</span>}
                       {billingPeriod && (
                         <Badge variant="outline" className="text-xs capitalize">{billingPeriod}</Badge>
                       )}

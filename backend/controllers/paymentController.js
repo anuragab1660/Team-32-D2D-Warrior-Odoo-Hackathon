@@ -89,9 +89,111 @@ const webhook = async (req, res) => {
     const signature = req.headers['x-razorpay-signature'];
     const isValid = verifyWebhookSignature(req.body, signature);
     if (!isValid) return res.status(400).json({ success: false, error: 'Invalid webhook signature' });
-    // Handle webhook events here
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: 'Webhook processing failed' }); }
 };
 
-module.exports = { getPayments, createOrder, verifyPayment, manualPayment, webhook };
+// POST /api/payments/create-cart-order — create Razorpay order directly from cart total
+const createCartOrder = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount || parseFloat(amount) <= 0) return res.status(400).json({ success: false, error: 'Invalid amount' });
+    const amountPaise = Math.round(parseFloat(amount) * 100);
+    const order = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: `c_${Date.now()}`,
+    });
+    res.json({ success: true, data: { order_id: order.id, amount: amountPaise, currency: 'INR' } });
+  } catch (err) { console.error(err); res.status(500).json({ success: false, error: 'Failed to create payment order' }); }
+};
+
+// POST /api/payments/verify-cart — verify payment + create subscription + invoice atomically
+const verifyCartPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items, billing_period, start_date, plan_id, notes, amount } = req.body;
+
+    const isValid = verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+    if (!isValid) return res.status(400).json({ success: false, error: 'Invalid payment signature' });
+
+    const custRes = await pool.query('SELECT id FROM customers WHERE user_id=$1', [req.user.id]);
+    if (!custRes.rows[0]) return res.status(400).json({ success: false, error: 'Customer profile not found. Please complete your profile.' });
+    const customer_id = custRes.rows[0].id;
+
+    const bp = billing_period || 'monthly';
+    const startBase = start_date ? new Date(start_date) : new Date();
+    const start = startBase.toISOString().split('T')[0];
+
+    let expiration_date = null;
+    if (bp === 'daily')   { const d = new Date(startBase); d.setDate(d.getDate() + 1); expiration_date = d.toISOString().split('T')[0]; }
+    if (bp === 'weekly')  { const d = new Date(startBase); d.setDate(d.getDate() + 7); expiration_date = d.toISOString().split('T')[0]; }
+    if (bp === 'monthly') { const d = new Date(startBase); d.setMonth(d.getMonth() + 1); expiration_date = d.toISOString().split('T')[0]; }
+    if (bp === 'yearly')  { const d = new Date(startBase); d.setFullYear(d.getFullYear() + 1); expiration_date = d.toISOString().split('T')[0]; }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // 1. Create subscription
+      const subRes = await client.query(
+        `INSERT INTO subscriptions (customer_id, plan_id, start_date, expiration_date, status, notes, created_by, subscription_number)
+         VALUES ($1, $2, $3, $4, 'active', $5, $6, '') RETURNING *`,
+        [customer_id, plan_id || null, start, expiration_date, notes || null, req.user.id]
+      );
+      const sub = subRes.rows[0];
+
+      // 2. Add subscription lines + fetch product names
+      let subtotal = 0;
+      const lineData = [];
+      for (const item of items) {
+        const up = parseFloat(item.unit_price) || 0;
+        const qty = parseInt(item.quantity) || 1;
+        subtotal += up * qty;
+        await client.query(
+          'INSERT INTO subscription_lines (subscription_id, product_id, variant_id, quantity, unit_price) VALUES ($1,$2,$3,$4,$5)',
+          [sub.id, item.product_id, item.variant_id || null, qty, up]
+        );
+        // Fetch product name for invoice line
+        const prodRes = await client.query('SELECT name FROM products WHERE id=$1', [item.product_id]);
+        lineData.push({
+          product_id: item.product_id,
+          product_name: prodRes.rows[0]?.name || 'Product',
+          qty,
+          up,
+          total: up * qty,
+        });
+      }
+
+      // 3. Generate invoice (status: paid immediately)
+      const grandTotal = parseFloat(amount) || subtotal;
+      const invRes = await client.query(
+        `INSERT INTO invoices (invoice_number, subscription_id, customer_id, subtotal, tax_total, discount_total, grand_total, created_by, issued_date, status)
+         VALUES ('', $1, $2, $3, 0, 0, $4, $5, CURRENT_DATE, 'paid') RETURNING *`,
+        [sub.id, customer_id, subtotal, grandTotal, req.user.id]
+      );
+      const inv = invRes.rows[0];
+
+      // 3a. Insert invoice lines
+      for (const line of lineData) {
+        await client.query(
+          `INSERT INTO invoice_lines (invoice_id, product_id, description, quantity, unit_price, tax_amount, discount_amount, line_total)
+           VALUES ($1, $2, $3, $4, $5, 0, 0, $6)`,
+          [inv.id, line.product_id, line.product_name, line.qty, line.up, line.total]
+        );
+      }
+
+      // 4. Record payment
+      await client.query(
+        `INSERT INTO payments (invoice_id, customer_id, amount, payment_method, status, razorpay_order_id, razorpay_payment_id, razorpay_signature, payment_date)
+         VALUES ($1, $2, $3, 'razorpay', 'success', $4, $5, $6, CURRENT_DATE)`,
+        [inv.id, customer_id, grandTotal, razorpay_order_id, razorpay_payment_id, razorpay_signature]
+      );
+
+      await client.query('COMMIT');
+      res.json({ success: true, message: 'Payment verified. Subscription activated!', data: sub });
+    } catch (err) { await client.query('ROLLBACK'); throw err; }
+    finally { client.release(); }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, error: 'Payment verification failed' }); }
+};
+
+module.exports = { getPayments, createOrder, verifyPayment, manualPayment, webhook, createCartOrder, verifyCartPayment };

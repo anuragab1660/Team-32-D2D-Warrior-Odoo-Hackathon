@@ -16,12 +16,14 @@ import {
 } from '@/components/ui/dialog'
 import {
   ShoppingCartIcon, TrashIcon, LoaderIcon, ArrowRightIcon,
-  CalendarIcon, LockIcon, ZapIcon,
+  CalendarIcon, LockIcon, ZapIcon, CreditCardIcon,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import type { BillingPeriod } from '@/types'
 import { getPeriodPrice, getPeriodSavings } from '@/lib/utils'
+import { processCardPayment } from '@/lib/razorpay'
+import { useAuth } from '@/hooks/useAuth'
 
 /**
  * @module portal/cart
@@ -55,12 +57,30 @@ export default function CartPage() {
    * RUFLOW_REVIEW: cart checkout page - billing config, confirm dialog, order placement
    */
   const { items, removeItem, updateQuantity, clearCart, subtotal, billing_period, start_date, setBillingPeriod, setStartDate } = useCartStore()
+  const { user } = useAuth()
   const router = useRouter()
   const [checkingOut, setCheckingOut] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [promoCode, setPromoCode] = useState('')
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoError, setPromoError] = useState('')
+
+  const [card, setCard] = useState({
+    number: '',
+    name: '',
+    expiry: '',
+    cvv: '',
+  })
+  const [cardError, setCardError] = useState('')
+
+  const formatCardNumber = (val: string) =>
+    val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
+
+  const formatExpiry = (val: string) => {
+    const clean = val.replace(/\D/g, '').slice(0, 4)
+    if (clean.length >= 3) return clean.slice(0, 2) + '/' + clean.slice(2)
+    return clean
+  }
 
   const todayStr = new Date().toISOString().split('T')[0]
   const endDate = computeEndDate(start_date || todayStr, billing_period)
@@ -88,31 +108,71 @@ export default function CartPage() {
   const totalAfterDiscount = sub - discountAmt
 
   const handleCheckout = async () => {
-    setShowConfirm(false)
+    setCardError('')
     if (items.length === 0) return
+
+    // Validate card fields
+    const rawNumber = card.number.replace(/\s/g, '')
+    if (rawNumber.length < 15) { setCardError('Enter a valid card number'); return }
+    if (!card.name.trim()) { setCardError('Enter the cardholder name'); return }
+    const expiryParts = card.expiry.split('/')
+    if (expiryParts.length !== 2 || expiryParts[0].length !== 2 || expiryParts[1].length !== 2) {
+      setCardError('Enter expiry as MM/YY'); return
+    }
+    if (card.cvv.length < 3) { setCardError('Enter a valid CVV'); return }
+
     setCheckingOut(true)
     try {
-      const plan_id = items.find(i => i.plan_id)?.plan_id || null
-      const { data } = await api.post('/api/subscriptions/from-cart', {
-        items: items.map(item => ({
-          product_id: item.product_id,
-          variant_id: item.variant_id,
-          plan_id: item.plan_id,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-        })),
-        billing_period,
-        start_date: start_date || todayStr,
-        plan_id,
-        notes: promoApplied ? `Promo: ${promoCode}` : '',
+      // Step 1 — create Razorpay order
+      const { data: orderData } = await api.post('/api/payments/create-cart-order', {
+        amount: totalAfterDiscount,
       })
-      clearCart()
-      toast.success('Order placed successfully!')
-      router.push(`/orders/${data.data.id}`)
+
+      // Step 2 — process card payment via Razorpay Custom Checkout
+      await processCardPayment({
+        order_id: orderData.data.order_id,
+        amount: orderData.data.amount,
+        currency: 'INR',
+        card_number: rawNumber,
+        card_name: card.name,
+        card_expiry_month: expiryParts[0],
+        card_expiry_year: expiryParts[1],
+        card_cvv: card.cvv,
+        email: user?.email,
+        contact: '9999999999',
+        onSuccess: async (paymentData) => {
+          try {
+            // Step 3 — verify + create subscription atomically
+            const { data: verifyData } = await api.post('/api/payments/verify-cart', {
+              razorpay_order_id: paymentData.razorpay_order_id,
+              razorpay_payment_id: paymentData.razorpay_payment_id,
+              razorpay_signature: paymentData.razorpay_signature,
+              items: items.map(item => ({
+                product_id: item.product_id,
+                variant_id: item.variant_id,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+              })),
+              billing_period,
+              start_date: start_date || todayStr,
+              plan_id: items.find(i => i.plan_id)?.plan_id || null,
+              notes: promoApplied ? `Promo: ${promoCode}` : '',
+              amount: totalAfterDiscount,
+            })
+            clearCart()
+            toast.success('Payment successful! Subscription activated.')
+            router.push(`/orders/${verifyData.data.id}`)
+          } catch (err: unknown) {
+            const e = err as { response?: { data?: { error?: string } } }
+            toast.error(e?.response?.data?.error || 'Payment received but activation failed. Contact support.')
+            setCheckingOut(false)
+          }
+        },
+        onError: () => setCheckingOut(false),
+      })
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       toast.error(e?.response?.data?.error || 'Checkout failed. Please try again.')
-    } finally {
       setCheckingOut(false)
     }
   }
@@ -364,42 +424,102 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* Confirm Dialog */}
-      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+      {/* Card Payment Dialog */}
+      <Dialog open={showConfirm} onOpenChange={(o) => { if (!checkingOut) { setShowConfirm(o); setCardError('') } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              ⚠️ Confirm Order
+              <CreditCardIcon className="h-5 w-5 text-indigo-500" />
+              Secure Payment
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-sm text-slate-600">
-              You are about to subscribe to <strong>{items.length}</strong> product{items.length !== 1 ? 's' : ''}.
-            </p>
-            <div className="bg-slate-50 rounded-lg p-3 space-y-1 text-sm">
+
+          <div className="space-y-4 py-1">
+            {/* Order summary strip */}
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-500">Billing</span>
-                <span className="font-medium capitalize">{billing_period} · ₹{totalAfterDiscount.toLocaleString('en-IN')}</span>
+                <span className="text-slate-500 capitalize">{billing_period} billing</span>
+                <span className="font-bold text-indigo-700 text-base">₹{totalAfterDiscount.toLocaleString('en-IN')}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Start</span>
-                <span className="font-medium">{fmtDate(start_date || todayStr)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Renews</span>
-                <span className="font-medium">{fmtDate(endDate)}</span>
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>{fmtDate(start_date || todayStr)} → {fmtDate(endDate)}</span>
+                <span>{items.length} item{items.length !== 1 ? 's' : ''}</span>
               </div>
             </div>
+
+            {cardError && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{cardError}</div>
+            )}
+
+            {/* Card Number */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-700">Card Number</Label>
+              <div className="relative">
+                <Input
+                  placeholder="4100 2800 0000 1007"
+                  value={card.number}
+                  onChange={e => setCard(c => ({ ...c, number: formatCardNumber(e.target.value) }))}
+                  maxLength={19}
+                  className="pr-10 tracking-widest font-mono text-sm"
+                />
+                <CreditCardIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+              </div>
+            </div>
+
+            {/* Cardholder Name */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-700">Cardholder Name</Label>
+              <Input
+                placeholder="Name on card"
+                value={card.name}
+                onChange={e => setCard(c => ({ ...c, name: e.target.value }))}
+              />
+            </div>
+
+            {/* Expiry + CVV */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-700">Expiry Date</Label>
+                <Input
+                  placeholder="MM/YY"
+                  value={card.expiry}
+                  onChange={e => setCard(c => ({ ...c, expiry: formatExpiry(e.target.value) }))}
+                  maxLength={5}
+                  className="tracking-widest font-mono text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-700">CVV</Label>
+                <Input
+                  placeholder="123"
+                  type="password"
+                  value={card.cvv}
+                  onChange={e => setCard(c => ({ ...c, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                  maxLength={4}
+                  className="tracking-widest font-mono text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 pt-1">
+              <LockIcon className="h-3 w-3" />
+              Payments secured by Razorpay. Test mode — no real money charged.
+            </div>
           </div>
+
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowConfirm(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowConfirm(false)} disabled={checkingOut}>
+              Cancel
+            </Button>
             <Button
               onClick={handleCheckout}
               disabled={checkingOut}
-              className="bg-indigo-600 hover:bg-indigo-700"
+              className="bg-indigo-600 hover:bg-indigo-700 gap-2"
             >
-              {checkingOut ? <LoaderIcon className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm &amp; Place Order
+              {checkingOut
+                ? <><LoaderIcon className="h-4 w-4 animate-spin" />Processing...</>
+                : <>Pay ₹{totalAfterDiscount.toLocaleString('en-IN')}</>
+              }
             </Button>
           </DialogFooter>
         </DialogContent>

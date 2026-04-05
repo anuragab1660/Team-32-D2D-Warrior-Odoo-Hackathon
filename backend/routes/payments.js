@@ -8,5 +8,7 @@ router.use(authenticate);
 router.get('/', requireRole('admin','internal'), c.getPayments);
 router.post('/create-order', c.createOrder);
 router.post('/verify', c.verifyPayment);
+router.post('/create-cart-order', c.createCartOrder);
+router.post('/verify-cart', c.verifyCartPayment);
 router.post('/manual', requireRole('admin','internal'), c.manualPayment);
 module.exports = router;
