@@ -21,8 +21,7 @@ const commands = [
   { label: 'Reports', href: '/reports', icon: BarChart3Icon, group: 'Navigation' },
   { label: 'Users', href: '/users', icon: UsersIcon, group: 'Navigation' },
   { label: 'Recurring Plans', href: '/configuration/recurring-plans', icon: SettingsIcon, group: 'Configuration' },
-  { label: 'Quotation Templates', href: '/configuration/quotation-templates', icon: SettingsIcon, group: 'Configuration' },
-  { label: 'Discounts', href: '/configuration/discounts', icon: SettingsIcon, group: 'Configuration' },
+{ label: 'Discounts', href: '/configuration/discounts', icon: SettingsIcon, group: 'Configuration' },
   { label: 'Taxes', href: '/configuration/taxes', icon: SettingsIcon, group: 'Configuration' },
 ]
 

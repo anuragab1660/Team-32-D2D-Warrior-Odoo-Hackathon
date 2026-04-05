@@ -7,7 +7,7 @@ import { useAuthStore } from '@/hooks/useAuth'
 import {
   LayoutDashboardIcon, UsersIcon, PackageIcon, FileTextIcon,
   CreditCardIcon, BarChart3Icon, SettingsIcon, ChevronRightIcon,
-  ZapIcon, TagIcon, PercentIcon, ReceiptIcon, BookTemplateIcon,
+  ZapIcon, TagIcon, PercentIcon, ReceiptIcon,
   RefreshCwIcon,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -39,7 +39,6 @@ const navItems: NavItem[] = [
     label: 'Configuration', href: '/configuration', icon: SettingsIcon,
     children: [
       { label: 'Recurring Plans', href: '/configuration/recurring-plans' },
-      { label: 'Templates', href: '/configuration/quotation-templates' },
       { label: 'Discounts', href: '/configuration/discounts', roles: ['admin'] },
       { label: 'Taxes', href: '/configuration/taxes' },
     ],
