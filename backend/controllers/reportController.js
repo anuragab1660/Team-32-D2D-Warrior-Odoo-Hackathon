@@ -28,7 +28,16 @@ const getDashboard = async (req, res) => {
 
 const getMonthlyRevenue = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM v_monthly_revenue LIMIT 12');
+    const { rows } = await pool.query(
+      `SELECT TO_CHAR(DATE_TRUNC('month', payment_date), 'Mon YYYY') AS month,
+              COUNT(*) AS count,
+              COALESCE(SUM(amount), 0) AS revenue
+       FROM payments
+       WHERE status = 'success'
+       GROUP BY DATE_TRUNC('month', payment_date)
+       ORDER BY DATE_TRUNC('month', payment_date) ASC
+       LIMIT 12`
+    );
     res.json({ success: true, data: rows });
   } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch revenue data' }); }
 };
@@ -42,14 +51,28 @@ const getActiveSubscriptions = async (req, res) => {
 
 const getInvoiceSummary = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM v_invoice_summary LIMIT 100');
+    const { rows } = await pool.query(
+      `SELECT status, COUNT(*) AS count, COALESCE(SUM(grand_total), 0) AS total
+       FROM invoices
+       GROUP BY status
+       ORDER BY count DESC`
+    );
     res.json({ success: true, data: rows });
   } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch invoice summary' }); }
 };
 
 const getOverdueInvoices = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM v_overdue_invoices');
+    const { rows } = await pool.query(
+      `SELECT i.id, i.invoice_number, i.grand_total AS amount, i.due_date,
+              CURRENT_DATE - i.due_date AS days_overdue,
+              u.name AS customer_name, u.email AS customer_email, c.company_name
+       FROM invoices i
+       JOIN customers c ON c.id = i.customer_id
+       JOIN users u ON u.id = c.user_id
+       WHERE i.status = 'confirmed' AND i.due_date < CURRENT_DATE
+       ORDER BY days_overdue DESC`
+    );
     res.json({ success: true, data: rows });
   } catch (err) { res.status(500).json({ success: false, error: 'Failed to fetch overdue invoices' }); }
 };
@@ -107,7 +130,7 @@ const getRecentActivity = async (req, res) => {
 const getTopProducts = async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT p.id, p.name, COALESCE(SUM(pay.amount), 0) as total_revenue, COUNT(DISTINCT il.invoice_id) as invoice_count
+      SELECT p.id, p.name AS product_name, COALESCE(SUM(pay.amount), 0) as total_revenue, COUNT(DISTINCT il.invoice_id) as invoice_count
       FROM products p
       LEFT JOIN invoice_lines il ON il.product_id = p.id
       LEFT JOIN invoices i ON i.id = il.invoice_id

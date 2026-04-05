@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import type { MonthlyRevenue, OverdueInvoice } from '@/types'
 import {
-  BarChart3Icon, TrendingUpIcon, AlertCircleIcon, ZapIcon, PackageIcon, DownloadIcon,
+  BarChart3Icon, TrendingUpIcon, AlertCircleIcon, ZapIcon, PackageIcon, DownloadIcon, CheckCircleIcon,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -75,15 +75,15 @@ export default function ReportsPage() {
     load()
   }, [getMonthlyRevenue, getOverdueInvoices, getInvoiceSummary])
 
-  const totalRevenue = revenue.reduce((sum, r) => sum + (r.revenue || 0), 0)
+  const totalRevenue = revenue.reduce((sum, r) => sum + Number(r.revenue || 0), 0)
   const pieData = breakdown.map(b => ({
     name: b.status.charAt(0).toUpperCase() + b.status.slice(1),
     value: parseInt(b.count),
     fill: PIE_COLORS[b.status] || '#94a3b8',
   }))
-  const revenueChartData = revenue.slice(-12).map(r => ({
-    month: r.month?.toString().slice(-7) || '',
-    revenue: r.revenue || 0,
+  const revenueChartData = revenue.map(r => ({
+    month: r.month?.toString() || '',
+    revenue: Number(r.revenue || 0),
   }))
 
   return (
@@ -96,11 +96,12 @@ export default function ReportsPage() {
       <PageHeader title="Reports" description="Business analytics and insights" />
 
       {/* KPI row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Revenue (All Time)', value: `₹${totalRevenue.toLocaleString('en-IN')}`, icon: TrendingUpIcon, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Active Subscriptions', value: breakdown.find(b => b.status === 'active')?.count ?? '0', icon: ZapIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { label: 'Paid Invoices', value: invoiceSummary.find(r => r.status === 'paid')?.count ?? '0', icon: CheckCircleIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Overdue Invoices', value: overdue.length, icon: AlertCircleIcon, color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Active Subscriptions', value: breakdown.find(b => b.status === 'active')?.count ?? '—', icon: ZapIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
             <Card className="border-slate-200">
