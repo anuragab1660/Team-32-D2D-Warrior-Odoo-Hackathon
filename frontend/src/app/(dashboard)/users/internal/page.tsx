@@ -5,22 +5,19 @@ import { motion } from 'framer-motion'
 import { useUsers } from '@/hooks'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PlusIcon, LoaderIcon, UserCheckIcon } from 'lucide-react'
+import { InviteUserDialog, type InviteUserFormState } from '@/features/users/components/InviteUserDialog'
+import { PlusIcon, UserCheckIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import type { User } from '@/types'
 
 export default function EmployeesPage() {
   const { users, loading, fetchInternalUsers, toggleUser, inviteUser } = useUsers()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
-  const [form, setForm] = useState({ name: '', email: '' })
+  const [form, setForm] = useState<InviteUserFormState>({ name: '', email: '', role: 'internal' })
 
   useEffect(() => { fetchInternalUsers() }, [])
 
@@ -47,7 +44,7 @@ export default function EmployeesPage() {
         role: 'internal',
       })
       setDialogOpen(false)
-      setForm({ name: '', email: '' })
+      setForm({ name: '', email: '', role: 'internal' })
       fetchInternalUsers()
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
@@ -134,44 +131,22 @@ export default function EmployeesPage() {
         </Table>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) setFormError(''); setDialogOpen(o) }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Invite Employee</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {formError && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{formError}</div>
-            )}
-            <div className="space-y-2">
-              <Label>Full Name <span className="text-red-500">*</span></Label>
-              <Input
-                placeholder="John Doe"
-                value={form.name}
-                onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email Address <span className="text-red-500">*</span></Label>
-              <Input
-                type="email"
-                placeholder="john@company.com"
-                value={form.email}
-                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-              />
-            </div>
-            <p className="text-xs text-slate-500">
-              The employee will receive an email invitation to set their password and activate the account.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
-              {saving ? <><LoaderIcon className="mr-2 h-4 w-4 animate-spin" />Sending...</> : 'Send Invite'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <InviteUserDialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          if (!o) setFormError('')
+          setDialogOpen(o)
+        }}
+        form={form}
+        onFormChange={setForm}
+        onSubmit={handleCreate}
+        loading={saving}
+        error={formError}
+        title="Invite Employee"
+        submitLabel="Send Invite"
+        showRoleSelect={false}
+        helperText="The employee will receive an email invitation to set their password and activate the account."
+      />
     </motion.div>
   )
 }
