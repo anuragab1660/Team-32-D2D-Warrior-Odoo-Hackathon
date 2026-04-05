@@ -11,8 +11,7 @@ export function useDiscounts() {
     await withLoading(setLoading, async () => {
       const query = buildQueryString({ is_active: active })
       const data = await requestData(() => discountsService.getDiscounts(query || undefined))
-      if (!data) return
-      setDiscounts(data.data)
+      setDiscounts(Array.isArray(data) ? data : [])
     })
   }, [])
 

@@ -11,8 +11,7 @@ export function usePlans() {
     await withLoading(setLoading, async () => {
       const query = buildQueryString({ is_active: active })
       const data = await requestData(() => plansService.getPlans(query || undefined))
-      if (!data) return
-      setPlans(data.data)
+      setPlans(Array.isArray(data) ? data : [])
     })
   }, [])
 

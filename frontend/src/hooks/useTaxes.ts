@@ -11,8 +11,7 @@ export function useTaxes() {
     await withLoading(setLoading, async () => {
       const query = buildQueryString({ is_active: active })
       const data = await requestData(() => taxesService.getTaxes(query || undefined))
-      if (!data) return
-      setTaxes(data.data)
+      setTaxes(Array.isArray(data) ? data : [])
     })
   }, [])
 

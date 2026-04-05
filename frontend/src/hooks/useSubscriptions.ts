@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { Subscription } from '@/types'
 import { DEFAULT_PAGINATION, buildQueryString, requestData, withLoading } from './utils'
 import { subscriptionsService } from '@/services'
+import { handleApiError } from '@/lib/api'
 
 export function useSubscriptions() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
@@ -20,13 +21,11 @@ export function useSubscriptions() {
         limit: filters.limit ?? 20,
       })
 
-      const data = await requestData(() =>
-        subscriptionsService.getSubscriptions(query),
-      )
-
-      if (!data) return
-      setSubscriptions(data.data)
-      setPagination(data.pagination)
+      try {
+        const res = await subscriptionsService.getSubscriptions(query)
+        setSubscriptions(Array.isArray(res.data.data) ? res.data.data : [])
+        setPagination(res.data.pagination ?? DEFAULT_PAGINATION)
+      } catch (err) { handleApiError(err) }
     })
   }, [])
 

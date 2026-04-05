@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { Invoice, InvoicePaymentStatus } from '@/types'
 import { DEFAULT_PAGINATION, buildQueryString, requestData, withLoading } from './utils'
 import { invoicesService } from '@/services'
+import { handleApiError } from '@/lib/api'
 
 export function useInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -19,13 +20,11 @@ export function useInvoices() {
         limit: filters.limit ?? 20,
       })
 
-      const data = await requestData(() =>
-        invoicesService.getInvoices(query),
-      )
-
-      if (!data) return
-      setInvoices(data.data)
-      setPagination(data.pagination)
+      try {
+        const res = await invoicesService.getInvoices(query)
+        setInvoices(Array.isArray(res.data.data) ? res.data.data : [])
+        setPagination(res.data.pagination ?? DEFAULT_PAGINATION)
+      } catch (err) { handleApiError(err) }
     })
   }, [])
 
@@ -58,13 +57,11 @@ export function useInvoices() {
         limit: filters.limit ?? 20,
       })
 
-      const data = await requestData(() =>
-        invoicesService.getMyInvoices(query),
-      )
-
-      if (!data) return
-      setInvoices(data.data)
-      setPagination(data.pagination)
+      try {
+        const res = await invoicesService.getMyInvoices(query)
+        setInvoices(Array.isArray(res.data.data) ? res.data.data : [])
+        setPagination(res.data.pagination ?? DEFAULT_PAGINATION)
+      } catch (err) { handleApiError(err) }
     })
   }, [])
 

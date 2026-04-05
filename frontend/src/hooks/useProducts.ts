@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { Product, ProductVariant } from '@/types'
 import { DEFAULT_PAGINATION, buildQueryString, requestData, withLoading } from './utils'
 import { productsService } from '@/services'
+import { handleApiError } from '@/lib/api'
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([])
@@ -20,13 +21,11 @@ export function useProducts() {
         limit: filters.limit ?? 20,
       })
 
-      const data = await requestData(() =>
-        productsService.getProducts(query),
-      )
-
-      if (!data) return
-      setProducts(data.data)
-      setPagination(data.pagination)
+      try {
+        const res = await productsService.getProducts(query)
+        setProducts(Array.isArray(res.data.data) ? res.data.data : [])
+        setPagination(res.data.pagination ?? DEFAULT_PAGINATION)
+      } catch (err) { handleApiError(err) }
     })
   }, [])
 

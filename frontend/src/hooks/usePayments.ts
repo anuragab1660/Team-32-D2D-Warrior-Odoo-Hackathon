@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { Payment } from '@/types'
 import { DEFAULT_PAGINATION, buildQueryString, requestData, withLoading } from './utils'
 import { paymentsService } from '@/services'
+import { handleApiError } from '@/lib/api'
 
 export function usePayments() {
   const [payments, setPayments] = useState<Payment[]>([])
@@ -19,11 +20,11 @@ export function usePayments() {
         limit: filters.limit ?? 20,
       })
 
-      const data = await requestData(() => paymentsService.getPayments(query))
-
-      if (!data) return
-      setPayments(data.data)
-      setPagination(data.pagination)
+      try {
+        const res = await paymentsService.getPayments(query)
+        setPayments(Array.isArray(res.data.data) ? res.data.data : [])
+        setPagination(res.data.pagination ?? DEFAULT_PAGINATION)
+      } catch (err) { handleApiError(err) }
     })
   }, [])
 
