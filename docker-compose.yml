@@ -44,9 +44,9 @@ services:
       SMTP_PASS: your_mailtrap_pass
       FROM_EMAIL: no-reply@prosubx.com
       APP_URL: http://localhost:3000
-      RAZORPAY_KEY_ID: rzp_test_xxxxxxxxxxxx
-      RAZORPAY_KEY_SECRET: your_razorpay_key_secret
-      RAZORPAY_WEBHOOK_SECRET: your_webhook_secret
+      RAZORPAY_KEY_ID: rzp_test_SZZGCPYN3kpSZY
+      RAZORPAY_KEY_SECRET: vPjp1otNkul2L1lfV5EdpiGH
+      RAZORPAY_WEBHOOK_SECRET: prosubx_webhook_secret_2025
       CLOUDINARY_CLOUD_NAME: dlgk8ngmu
       CLOUDINARY_API_KEY: 451714164697449
       CLOUDINARY_API_SECRET: lphUf_yyi2uNyPxNaBeLzzVRlRw
@@ -67,7 +67,7 @@ services:
       - "3000:3000"
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:5000
-      NEXT_PUBLIC_RAZORPAY_KEY_ID: rzp_test_xxxxxxxxxxxx
+      NEXT_PUBLIC_RAZORPAY_KEY_ID: rzp_test_SZZGCPYN3kpSZY
       WATCHPACK_POLLING: "true"
     depends_on:
       - backend
