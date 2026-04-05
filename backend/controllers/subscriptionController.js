@@ -7,7 +7,7 @@ const getSubscriptions = async (req, res) => {
     const { status, customer, plan, page, limit, search } = req.query;
     const { limit: lim, offset, page: pg } = getPagination(page, limit);
     const conds=[]; const params=[]; let idx=1;
-    if (status) { conds.push(`s.status=$${idx++}`); params.push(status); }
+    if (status) { conds.push(`s.status=$${idx++}::subscription_status`); params.push(status); }
     if (plan) { conds.push(`s.plan_id=$${idx++}`); params.push(plan); }
     if (search) { conds.push(`u.name ILIKE $${idx++}`); params.push(`%${search}%`); }
     const where = conds.length ? 'AND '+conds.join(' AND ') : '';
