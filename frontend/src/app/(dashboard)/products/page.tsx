@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useProducts } from '@/hooks/useProducts'
@@ -8,18 +8,28 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { ActiveBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { PlusIcon, ImageIcon, PackageIcon } from 'lucide-react'
+import { PlusIcon, ImageIcon, PackageIcon, SearchIcon } from 'lucide-react'
 import Image from 'next/image'
 import type { Product } from '@/types'
 
 export default function ProductsPage() {
   const { products, loading, pagination, fetchProducts } = useProducts()
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
   useEffect(() => {
-    fetchProducts()
-  }, [fetchProducts])
+    const t = setTimeout(() => setDebouncedSearch(search), 350)
+    return () => clearTimeout(t)
+  }, [search])
+
+  const load = useCallback((page = 1) => {
+    fetchProducts({ search: debouncedSearch || undefined, page })
+  }, [fetchProducts, debouncedSearch])
+
+  useEffect(() => { load(1) }, [load])
 
   return (
     <motion.div
@@ -39,6 +49,17 @@ export default function ProductsPage() {
           </Link>
         }
       />
+
+      {/* Search */}
+      <div className="relative max-w-xs">
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+        <Input
+          placeholder="Search products..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-8 h-8 text-sm"
+        />
+      </div>
 
       <div className="rounded-xl border border-slate-200 overflow-hidden bg-white overflow-x-auto">
         <Table>
@@ -125,7 +146,7 @@ export default function ProductsPage() {
       <PaginationControls
         page={pagination.page}
         totalPages={pagination.pages}
-        onPageChange={(p) => fetchProducts({ page: p })}
+        onPageChange={(p) => load(p)}
       />
     </motion.div>
   )

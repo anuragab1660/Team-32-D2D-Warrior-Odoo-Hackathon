@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -43,6 +44,9 @@ function calcExpiry(startDate: string, period: 'monthly' | 'yearly') {
 }
 
 export default function NewSubscriptionPage() {
+  // Page disabled — button removed from UI; direct URL access returns 404
+  notFound()
+
   const router = useRouter()
   const { createSubscription, addLine } = useSubscriptions()
   const [customers, setCustomers] = useState<Customer[]>([])

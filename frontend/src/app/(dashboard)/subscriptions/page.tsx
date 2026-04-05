@@ -50,13 +50,6 @@ export default function SubscriptionsPage() {
       <PageHeader
         title="Subscriptions"
         description="Manage all customer subscriptions"
-        action={
-          <Link href="/subscriptions/new">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-              <PlusIcon className="h-4 w-4" />New Subscription
-            </Button>
-          </Link>
-        }
       />
 
       {/* Filters */}
@@ -117,12 +110,7 @@ export default function SubscriptionsPage() {
                 <TableCell colSpan={6} className="text-center py-16 text-slate-400">
                   <ZapIcon className="h-8 w-8 mx-auto mb-2 text-slate-300" />
                   <p className="font-medium">No subscriptions found</p>
-                  <p className="text-sm mb-3">Create your first subscription to get started.</p>
-                  <Link href="/subscriptions/new">
-                    <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-                      <PlusIcon className="h-3.5 w-3.5" />New Subscription
-                    </Button>
-                  </Link>
+                  <p className="text-sm mb-3">No subscriptions found.</p>
                 </TableCell>
               </TableRow>
             ) : (

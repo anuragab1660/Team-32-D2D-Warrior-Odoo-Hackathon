@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { FileTextIcon } from 'lucide-react'
 import type { Invoice } from '@/types'
 
-const STATUS_TABS = ['all', 'sent', 'paid', 'overdue', 'cancelled'] as const
+const STATUS_TABS = ['all', 'paid', 'cancelled'] as const
 type StatusTab = typeof STATUS_TABS[number]
 
 export default function InvoicesPage() {
