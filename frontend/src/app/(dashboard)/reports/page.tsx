@@ -32,7 +32,7 @@ const PIE_COLORS: Record<string, string> = {
 }
 
 function downloadCSV(data: Record<string, unknown>[], filename: string) {
-  if (!data.length) return
+  if (!Array.isArray(data) || data.length === 0) return
   const headers = Object.keys(data[0])
   const rows = data.map(row => headers.map(h => JSON.stringify(row[h] ?? '')).join(','))
   const csv = [headers.join(','), ...rows].join('\n')

@@ -69,7 +69,7 @@ export function useInvoices() {
   }, [])
 
   const getCustomerInvoices = useCallback(async (customerId: string) => {
-    return requestData(() => invoicesService.getCustomerInvoices(customerId))
+    return requestData(() => invoicesService.getCustomerInvoices(customerId), { fallback: [] })
   }, [])
 
   return {

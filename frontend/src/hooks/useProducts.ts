@@ -55,7 +55,7 @@ export function useProducts() {
   }, [])
 
   const getVariants = useCallback(async (productId: string) => {
-    return requestData(() => productsService.getVariants(productId))
+    return requestData(() => productsService.getVariants(productId), { fallback: [] })
   }, [])
 
   const createVariant = useCallback(async (productId: string, payload: Partial<ProductVariant>) => {
