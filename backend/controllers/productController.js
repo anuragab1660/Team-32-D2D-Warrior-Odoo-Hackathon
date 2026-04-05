@@ -1,13 +1,15 @@
 const pool = require('../db');
 
 // Run migrations for all extra product columns
-Promise.all([
-  pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS yearly_price NUMERIC(10,2)`),
-  pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(100)`),
-  pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS hsn_sac_code VARCHAR(20)`),
-  pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_id UUID REFERENCES taxes(id) ON DELETE SET NULL`),
-  pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS default_discount_id UUID REFERENCES discounts(id) ON DELETE SET NULL`),
-]).catch(err => console.error('products migration error:', err.message));
+(async () => {
+  try {
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS yearly_price NUMERIC(10,2)`);
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(100)`);
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS hsn_sac_code VARCHAR(20)`);
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_id UUID REFERENCES taxes(id) ON DELETE SET NULL`);
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS default_discount_id UUID REFERENCES discounts(id) ON DELETE SET NULL`);
+  } catch (err) { console.error('products migration error:', err.message); }
+})();
 
 const getPagination = (page, limit) => {
   const p = Math.max(1, parseInt(page) || 1);
