@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import api from '@/lib/api'
+import { useUsers } from '@/hooks'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { ActiveBadge } from '@/components/shared/StatusBadge'
@@ -63,30 +63,16 @@ const buildColumns = (
 ]
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
+  const { users, loading, fetchUsers, toggleUser, resendInvite, inviteUser } = useUsers()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'internal' })
   const [inviting, setInviting] = useState(false)
-
-  const fetchUsers = async () => {
-    setLoading(true)
-    try {
-      const { data } = await api.get('/api/users')
-      setUsers(data.data || [])
-    } catch {
-      toast.error('Failed to fetch users')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   useEffect(() => { fetchUsers() }, [])
 
   const handleToggle = async (id: string) => {
     try {
-      await api.patch(`/api/users/${id}/toggle`)
-      toast.success('User status updated')
+      await toggleUser(id)
       fetchUsers()
     } catch {
       toast.error('Failed to update user')
@@ -95,8 +81,7 @@ export default function UsersPage() {
 
   const handleResend = async (id: string) => {
     try {
-      await api.post(`/api/users/${id}/resend-invite`)
-      toast.success('Invitation resent')
+      await resendInvite(id)
     } catch {
       toast.error('Failed to resend invitation')
     }
@@ -106,8 +91,11 @@ export default function UsersPage() {
     if (!inviteForm.email) return
     setInviting(true)
     try {
-      await api.post('/api/users/invite', inviteForm)
-      toast.success('Invitation sent!')
+      await inviteUser({
+        name: inviteForm.name || undefined,
+        email: inviteForm.email,
+        role: inviteForm.role as 'admin' | 'internal',
+      })
       setDialogOpen(false)
       setInviteForm({ name: '', email: '', role: 'internal' })
       fetchUsers()
@@ -170,7 +158,6 @@ export default function UsersPage() {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="internal">Internal</SelectItem>
-                  <SelectItem value="portal">Portal (Customer)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

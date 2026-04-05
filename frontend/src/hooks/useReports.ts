@@ -1,52 +1,47 @@
 import { useState, useCallback } from 'react'
-import api, { handleApiError } from '@/lib/api'
-import type { DashboardMetrics, MonthlyRevenue, OverdueInvoice, PendingInvitation, ApiResponse } from '@/types'
+import type { DashboardMetrics, MonthlyRevenue, OverdueInvoice, PendingInvitation } from '@/types'
+import { requestData, withLoading } from './utils'
+import { reportsService } from '@/services'
 
 export function useReports() {
   const [loading, setLoading] = useState(false)
 
   const getDashboard = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data } = await api.get<ApiResponse<DashboardMetrics>>('/api/reports/dashboard')
-      return data.data
-    } catch (err) { handleApiError(err); return null }
-    finally { setLoading(false) }
+    return withLoading(setLoading, () =>
+      requestData(() => reportsService.getDashboard(), {
+        fallback: null,
+      }),
+    )
   }, [])
 
   const getMonthlyRevenue = useCallback(async () => {
-    try {
-      const { data } = await api.get<ApiResponse<MonthlyRevenue[]>>('/api/reports/monthly-revenue')
-      return data.data
-    } catch (err) { handleApiError(err); return [] }
+    return requestData(() => reportsService.getMonthlyRevenue(), {
+      fallback: [],
+    })
   }, [])
 
   const getOverdueInvoices = useCallback(async () => {
-    try {
-      const { data } = await api.get<ApiResponse<OverdueInvoice[]>>('/api/reports/overdue-invoices')
-      return data.data
-    } catch (err) { handleApiError(err); return [] }
+    return requestData(() => reportsService.getOverdueInvoices(), {
+      fallback: [],
+    })
   }, [])
 
   const getActiveSubscriptions = useCallback(async () => {
-    try {
-      const { data } = await api.get('/api/reports/active-subscriptions')
-      return data.data
-    } catch (err) { handleApiError(err); return [] }
+    return requestData(() => reportsService.getActiveSubscriptions(), {
+      fallback: [],
+    })
   }, [])
 
   const getInvoiceSummary = useCallback(async () => {
-    try {
-      const { data } = await api.get('/api/reports/invoice-summary')
-      return data.data
-    } catch (err) { handleApiError(err); return [] }
+    return requestData(() => reportsService.getInvoiceSummary(), {
+      fallback: [],
+    })
   }, [])
 
   const getPendingInvitations = useCallback(async () => {
-    try {
-      const { data } = await api.get<ApiResponse<PendingInvitation[]>>('/api/reports/pending-invitations')
-      return data.data
-    } catch (err) { handleApiError(err); return [] }
+    return requestData(() => reportsService.getPendingInvitations(), {
+      fallback: [],
+    })
   }, [])
 
   return { loading, getDashboard, getMonthlyRevenue, getOverdueInvoices, getActiveSubscriptions, getInvoiceSummary, getPendingInvitations }

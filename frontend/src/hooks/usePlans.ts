@@ -1,43 +1,43 @@
 import { useState, useCallback } from 'react'
-import api, { handleApiError } from '@/lib/api'
-import type { RecurringPlan, PaginatedResponse, ApiResponse } from '@/types'
-import { toast } from 'sonner'
+import type { RecurringPlan } from '@/types'
+import { buildQueryString, requestData, withLoading } from './utils'
+import { plansService } from '@/services'
 
 export function usePlans() {
   const [plans, setPlans] = useState<RecurringPlan[]>([])
   const [loading, setLoading] = useState(false)
 
   const fetchPlans = useCallback(async (active?: boolean) => {
-    setLoading(true)
-    try {
-      const params = active !== undefined ? `?is_active=${active}` : ''
-      const { data } = await api.get<PaginatedResponse<RecurringPlan>>(`/api/plans${params}`)
+    await withLoading(setLoading, async () => {
+      const query = buildQueryString({ is_active: active })
+      const data = await requestData(() => plansService.getPlans(query || undefined))
+      if (!data) return
       setPlans(data.data)
-    } catch (err) { handleApiError(err) }
-    finally { setLoading(false) }
+    })
   }, [])
 
   const createPlan = useCallback(async (payload: Partial<RecurringPlan>) => {
-    const { data } = await api.post<ApiResponse<RecurringPlan>>('/api/plans', payload)
-    toast.success(data.message || 'Plan created')
-    return data.data
+    return requestData(() => plansService.createPlan(payload), {
+      successMessage: 'Plan created',
+    })
   }, [])
 
   const updatePlan = useCallback(async (id: string, payload: Partial<RecurringPlan>) => {
-    const { data } = await api.put<ApiResponse<RecurringPlan>>(`/api/plans/${id}`, payload)
-    toast.success(data.message || 'Plan updated')
-    return data.data
+    return requestData(() => plansService.updatePlan(id, payload), {
+      successMessage: 'Plan updated',
+    })
   }, [])
 
   const togglePlan = useCallback(async (id: string) => {
-    const { data } = await api.patch<ApiResponse<RecurringPlan>>(`/api/plans/${id}/toggle`)
-    toast.success(data.message || 'Plan updated')
-    return data.data
+    return requestData(() => plansService.togglePlan(id), {
+      successMessage: 'Plan updated',
+    })
   }, [])
 
   const deletePlan = useCallback(async (id: string) => {
-    await api.delete(`/api/plans/${id}`)
-    toast.success('Plan deleted')
+    await requestData(() => plansService.deletePlan(id), {
+      successMessage: 'Plan deleted',
+    })
   }, [])
 
   return { plans, loading, fetchPlans, createPlan, updatePlan, togglePlan, deletePlan }

@@ -37,8 +37,8 @@ const inviteUser = async (req, res) => {
   try {
     const { name, email, role } = req.body;
     if (!email) return res.status(400).json({ success: false, error: 'Email is required' });
-    if (!['admin', 'internal', 'portal'].includes(role)) {
-      return res.status(400).json({ success: false, error: 'Invalid role' });
+    if (!['admin', 'internal'].includes(role)) {
+      return res.status(400).json({ success: false, error: 'Only admin and internal users can be invited by admin.' });
     }
 
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);

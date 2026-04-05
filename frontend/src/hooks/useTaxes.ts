@@ -1,43 +1,43 @@
 import { useState, useCallback } from 'react'
-import api, { handleApiError } from '@/lib/api'
-import type { Tax, PaginatedResponse, ApiResponse } from '@/types'
-import { toast } from 'sonner'
+import type { Tax } from '@/types'
+import { buildQueryString, requestData, withLoading } from './utils'
+import { taxesService } from '@/services'
 
 export function useTaxes() {
   const [taxes, setTaxes] = useState<Tax[]>([])
   const [loading, setLoading] = useState(false)
 
   const fetchTaxes = useCallback(async (active?: boolean) => {
-    setLoading(true)
-    try {
-      const params = active !== undefined ? `?is_active=${active}` : ''
-      const { data } = await api.get<PaginatedResponse<Tax>>(`/api/taxes${params}`)
+    await withLoading(setLoading, async () => {
+      const query = buildQueryString({ is_active: active })
+      const data = await requestData(() => taxesService.getTaxes(query || undefined))
+      if (!data) return
       setTaxes(data.data)
-    } catch (err) { handleApiError(err) }
-    finally { setLoading(false) }
+    })
   }, [])
 
   const createTax = useCallback(async (payload: Partial<Tax>) => {
-    const { data } = await api.post<ApiResponse<Tax>>('/api/taxes', payload)
-    toast.success(data.message || 'Tax created')
-    return data.data
+    return requestData(() => taxesService.createTax(payload), {
+      successMessage: 'Tax created',
+    })
   }, [])
 
   const updateTax = useCallback(async (id: string, payload: Partial<Tax>) => {
-    const { data } = await api.put<ApiResponse<Tax>>(`/api/taxes/${id}`, payload)
-    toast.success(data.message || 'Tax updated')
-    return data.data
+    return requestData(() => taxesService.updateTax(id, payload), {
+      successMessage: 'Tax updated',
+    })
   }, [])
 
   const toggleTax = useCallback(async (id: string) => {
-    const { data } = await api.patch<ApiResponse<Tax>>(`/api/taxes/${id}/toggle`)
-    toast.success(data.message || 'Tax updated')
-    return data.data
+    return requestData(() => taxesService.toggleTax(id), {
+      successMessage: 'Tax updated',
+    })
   }, [])
 
   const deleteTax = useCallback(async (id: string) => {
-    await api.delete(`/api/taxes/${id}`)
-    toast.success('Tax deleted')
+    await requestData(() => taxesService.deleteTax(id), {
+      successMessage: 'Tax deleted',
+    })
   }, [])
 
   return { taxes, loading, fetchTaxes, createTax, updateTax, toggleTax, deleteTax }

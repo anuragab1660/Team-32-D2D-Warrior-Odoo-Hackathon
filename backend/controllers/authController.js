@@ -36,6 +36,13 @@ const login = async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
 
+    if (user.role === 'portal' && !user.is_email_verified) {
+      return res.status(401).json({
+        success: false,
+        error: 'Please verify your email before logging in. Check your inbox for the verification link.',
+      });
+    }
+
     if (user.role === 'internal' && !user.invite_accepted_at) {
       return res.status(401).json({ success: false, error: 'Account not activated. Please accept the invite sent to your email.' });
     }
@@ -71,23 +78,34 @@ const signup = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+    const verifyToken = generateToken();
+    const verifyTokenHash = hashToken(verifyToken);
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       const userRes = await client.query(
         `INSERT INTO users (name, email, password_hash, role, is_email_verified)
-         VALUES ($1, $2, $3, 'portal', true)
+         VALUES ($1, $2, $3, 'portal', false)
          RETURNING id, name, email, role`,
         [name, email.toLowerCase(), passwordHash]
       );
       const newUser = userRes.rows[0];
+
+      await client.query(
+        'UPDATE users SET verify_token = $1, verify_token_exp = NOW() + INTERVAL \''24 hours\'' WHERE id = $2',
+        [verifyTokenHash, newUser.id]
+      );
+
       await client.query('INSERT INTO customers (user_id) VALUES ($1)', [newUser.id]);
+
+      await sendVerifyEmail(newUser.email, newUser.name, verifyToken);
+
       await client.query('COMMIT');
 
       res.status(201).json({
         success: true,
-        message: 'Account created successfully. You can now log in.',
+        message: 'Account created. Please verify your email to activate your account.',
         data: { id: newUser.id, name: newUser.name, email: newUser.email },
       });
     } catch (err) {
@@ -193,8 +211,8 @@ const acceptInvite = async (req, res) => {
 
     const tokenHash = hashToken(token);
     const { rows } = await pool.query(
-      'SELECT id, invite_token_exp FROM users WHERE invite_token = $1 AND role = $2',
-      [tokenHash, 'internal']
+      'SELECT id, role, invite_token_exp FROM users WHERE invite_token = $1 AND role = ANY($2::text[])',
+      [tokenHash, ['internal', 'admin']]
     );
     const user = rows[0];
 

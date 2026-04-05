@@ -49,8 +49,8 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
       })
-      toast.success('Account created! You can now log in.')
-      router.push('/login')
+      toast.success('Account created. Please verify your email before logging in.')
+      router.push('/verify-email')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e?.response?.data?.error || 'Failed to create account')

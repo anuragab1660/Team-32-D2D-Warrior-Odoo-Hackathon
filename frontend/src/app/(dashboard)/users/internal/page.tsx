@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import api from '@/lib/api'
+import { useUsers } from '@/hooks'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,39 +11,23 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PlusIcon, LoaderIcon, EyeIcon, EyeOffIcon, UserCheckIcon } from 'lucide-react'
+import { PlusIcon, LoaderIcon, UserCheckIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import type { User } from '@/types'
 
 export default function EmployeesPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
+  const { users, loading, fetchInternalUsers, toggleUser, inviteUser } = useUsers()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [showPass, setShowPass] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
   const [formError, setFormError] = useState('')
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
+  const [form, setForm] = useState({ name: '', email: '' })
 
-  const fetchUsers = async () => {
-    setLoading(true)
-    try {
-      const { data } = await api.get('/api/users/internal')
-      setUsers(data.data || [])
-    } catch {
-      toast.error('Failed to fetch employees')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { fetchUsers() }, [])
+  useEffect(() => { fetchInternalUsers() }, [])
 
   const handleToggle = async (id: string) => {
     try {
-      await api.patch(`/api/users/${id}/toggle`)
-      toast.success('Employee status updated')
-      fetchUsers()
+      await toggleUser(id)
+      fetchInternalUsers()
     } catch {
       toast.error('Failed to update employee')
     }
@@ -51,32 +35,23 @@ export default function EmployeesPage() {
 
   const handleCreate = async () => {
     setFormError('')
-    if (!form.name || !form.email || !form.password) {
-      setFormError('All fields are required')
-      return
-    }
-    if (form.password.length < 8) {
-      setFormError('Password must be at least 8 characters')
-      return
-    }
-    if (form.password !== form.confirmPassword) {
-      setFormError('Passwords do not match')
+    if (!form.name || !form.email) {
+      setFormError('Name and email are required')
       return
     }
     setSaving(true)
     try {
-      await api.post('/api/users/create-internal', {
+      await inviteUser({
         name: form.name,
         email: form.email,
-        password: form.password,
+        role: 'internal',
       })
-      toast.success('Employee created successfully')
       setDialogOpen(false)
-      setForm({ name: '', email: '', password: '', confirmPassword: '' })
-      fetchUsers()
+      setForm({ name: '', email: '' })
+      fetchInternalUsers()
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
-      setFormError(e?.response?.data?.error || 'Failed to create employee')
+      setFormError(e?.response?.data?.error || 'Failed to send invitation')
     } finally {
       setSaving(false)
     }
@@ -95,7 +70,7 @@ export default function EmployeesPage() {
         action={
           <Button onClick={() => { setFormError(''); setDialogOpen(true) }} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
             <PlusIcon className="h-4 w-4" />
-            Add Employee
+            Invite Employee
           </Button>
         }
       />
@@ -162,7 +137,7 @@ export default function EmployeesPage() {
       <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) setFormError(''); setDialogOpen(o) }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Employee</DialogTitle>
+            <DialogTitle>Invite Employee</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             {formError && (
@@ -185,49 +160,14 @@ export default function EmployeesPage() {
                 onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Password <span className="text-red-500">*</span></Label>
-              <div className="relative">
-                <Input
-                  type={showPass ? 'text' : 'password'}
-                  placeholder="Min 8 chars with uppercase, lowercase, number"
-                  value={form.password}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  {showPass ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Confirm Password <span className="text-red-500">*</span></Label>
-              <div className="relative">
-                <Input
-                  type={showConfirm ? 'text' : 'password'}
-                  placeholder="Re-enter password"
-                  value={form.confirmPassword}
-                  onChange={e => setForm(p => ({ ...p, confirmPassword: e.target.value }))}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  {showConfirm ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
+            <p className="text-xs text-slate-500">
+              The employee will receive an email invitation to set their password and activate the account.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
-              {saving ? <><LoaderIcon className="mr-2 h-4 w-4 animate-spin" />Creating...</> : 'Create Employee'}
+              {saving ? <><LoaderIcon className="mr-2 h-4 w-4 animate-spin" />Sending...</> : 'Send Invite'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -221,11 +221,12 @@ JWT_EXPIRES_IN=15m
 JWT_REFRESH_SECRET=another_secret_for_refresh_tokens
 JWT_REFRESH_EXPIRES_IN=7d
 
-# ── Email (Mailtrap for dev) ─────────────────────
-SMTP_HOST=smtp.mailtrap.io
+# ── Email (Gmail SMTP with App Password) ─────────
+SMTP_SERVICE=gmail
+SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=your_mailtrap_user
-SMTP_PASS=your_mailtrap_pass
+SMTP_USER=your_gmail_address@gmail.com
+SMTP_PASS=your_gmail_app_password
 FROM_EMAIL=no-reply@yourcompany.com
 
 # ── App URL (used in email links) ────────────────
